@@ -1,6 +1,6 @@
 <?php
 
-$db_host = "127.0.0.1";
+$db_host = "100.91.139.68";
 $db_user = "absen";
 $db_pass = "881f18347f62e";
 $db_name = "absen";
