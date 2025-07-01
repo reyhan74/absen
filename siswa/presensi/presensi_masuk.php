@@ -23,12 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $jam_masuk = date('H:i:s');
     $nama_file = 'foto/masuk_' . date('Y-m-d_H-i-s') . '.png';
     $file = basename($nama_file);
-    $id_pegawai = $_SESSION['id'] ?? null;
+    $id_siswa = $_SESSION['id'] ?? null;
 
     // Ambil kembali data lokasi dari form
     $nama_lokasi = $_POST['nama_lokasi'] ?? 'Tidak diketahui';
-    if ($id_pegawai) {
-        $cekQuery = "SELECT * FROM presensi WHERE id_siswa = '$id_pegawai' AND tanggal_masuk = '$tanggal_masuk'";
+    if ($id_siswa) {
+        $cekQuery = "SELECT * FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_masuk'";
         $cekResult = mysqli_query($conection, $cekQuery);
 
         if (mysqli_num_rows($cekResult) > 0) {
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         } else {
             file_put_contents($nama_file, $data);
             $query = "INSERT INTO presensi (id_siswa, nama_lokasi, tanggal_masuk, jam_masuk, foto_masuk)
-                      VALUES ('$id_pegawai', '$nama_lokasi', '$tanggal_masuk', '$jam_masuk', '$file')";
+                      VALUES ('$id_siswa', '$nama_lokasi', '$tanggal_masuk', '$jam_masuk', '$file')";
             $result = mysqli_query($conection, $query);
 
             if ($result) {
