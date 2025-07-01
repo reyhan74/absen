@@ -1,3 +1,3 @@
 <?php 
-header ("location: \absen\auth\login.php");
+header ("location: \auth\login.php");
 ?>

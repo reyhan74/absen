@@ -1,3 +1,3 @@
 <?php 
-header ("location: \absen\auth\siswa\login.php");
+header ("location: \auth\siswa\login.php");
 ?>
