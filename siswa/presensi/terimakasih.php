@@ -78,7 +78,7 @@ $terlambat = $jam_presensi > $batas_jam;
                                 <span class="badge bg-success">Tepat Waktu</span>
                             <?php endif; ?>
                         </p>
-                        <img src="foto/<?= $foto ?>" alt="Foto Presensi" style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
+                        <img src="./foto/<?= $foto ?>" alt="Foto Presensi" style="max-width: 300px; border-radius: 10px; margin-top: 10px;">
                         <br><br>
                         <a href="../home/home.php" class="btn btn-outline-primary mt-3">Kembali ke Beranda</a>
                     </div>
