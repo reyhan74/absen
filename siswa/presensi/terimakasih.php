@@ -37,12 +37,20 @@ $nama = htmlspecialchars($_SESSION['nama']);
 $foto = htmlspecialchars($data['foto_masuk']);
 $tanggal = htmlspecialchars($data['tanggal_masuk']);
 $jam = htmlspecialchars($data['jam_masuk']);
-$nama_lokasi = strtolower(trim($data['nama_lokasi'])); // misalnya: gmt_pare, dll
+$nama_lokasi = strtolower(trim($data['nama_lokasi']));
 
-// Tentukan batas jam keterlambatan
-if ($nama_lokasi === 'gmt_pare') {
-    $batas_jam = strtotime("08:00:00");
+// Ambil batas jam masuk dari tabel lokasi_presensi
+$sql_lokasi = "SELECT jam_masuk FROM lokasi_presensi 
+               WHERE LOWER(TRIM(nama_lokasi)) = '$nama_lokasi' 
+               LIMIT 1";
+$query_lokasi = mysqli_query($conection, $sql_lokasi);
+
+if (mysqli_num_rows($query_lokasi) > 0) {
+    $data_lokasi = mysqli_fetch_assoc($query_lokasi);
+    $jam_batas_db = $data_lokasi['jam_masuk'];
+    $batas_jam = strtotime($jam_batas_db);
 } else {
+    // fallback jika data lokasi tidak ditemukan
     $batas_jam = strtotime("07:00:00");
 }
 
