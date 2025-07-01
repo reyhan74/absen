@@ -42,7 +42,7 @@ if (isset($_GET['periode']) && $_GET['periode'] != 'all') {
 $query = "
     SELECT 
         s.nis, s.nama, s.kelas,
-        p.tanggal_masuk, p.jam_masuk, p.foto_masuk,
+        p.tanggal_masuk, p.jam_masuk, p.foto_masuk, p.nama_lokasi,
         o.jam_keluar, o.foto_keluar
     FROM siswa s
     LEFT JOIN presensi p ON s.id = p.id_siswa
@@ -99,6 +99,7 @@ if (!$result) {
                                 <th>Kelas</th>
                                 <th>Tanggal</th>
                                 <th>Jam Masuk</th>
+                                <th>Lokasi</th>
                                 <th>Foto Masuk</th>
                                 <th>Jam Keluar</th>
                                 <th>Foto Keluar</th>
@@ -115,6 +116,7 @@ if (!$result) {
                                 <td><?= htmlspecialchars($row['kelas'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($row['tanggal_masuk']) ?></td>
                                 <td><?= htmlspecialchars($row['jam_masuk']) ?></td>
+                                <td><?= htmlspecialchars($row['nama_lokasi'] ?? '-') ?></td>
                                 <td>
                                     <?php if (!empty($row['foto_masuk'])) : ?>
                                         <img src="../../siswa/presensi/foto/<?= htmlspecialchars($row['foto_masuk']) ?>" alt="Foto Masuk" width="80">
@@ -134,7 +136,7 @@ if (!$result) {
                             <?php endwhile; ?>
                             <?php if (mysqli_num_rows($result) === 0): ?>
                                 <tr>
-                                    <td colspan="9">Tidak ada data presensi ditemukan.</td>
+                                    <td colspan="10">Tidak ada data presensi ditemukan.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
