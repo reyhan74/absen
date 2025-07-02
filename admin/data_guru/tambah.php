@@ -24,7 +24,6 @@ if (isset($_POST['submit'])) {
     $jenis_kelamin = htmlspecialchars($_POST['jenis_kelamin']);
     $alamat = htmlspecialchars($_POST['alamat']);
     $no_handphone = htmlspecialchars($_POST['no_handphone']);
-    $lokasi_presensi = htmlspecialchars($_POST['lokasi_presensi']);
     
     // Handle file upload
     $foto = $_FILES['foto']['name'];
@@ -58,9 +57,6 @@ if (isset($_POST['submit'])) {
     }
     if (empty($no_handphone)) {
         $pesan_kesalahan[] = "No Handphone wajib diisi"; 
-    }
-    if (empty($lokasi_presensi)) {
-        $pesan_kesalahan[] = "Lokasi Presensi wajib diisi"; 
     }
     if (empty($foto)) {
         $pesan_kesalahan[] = "Foto wajib diisi"; 
@@ -169,11 +165,6 @@ include('../layout/header.php');
                         <div class="col-md-6 mb-3">
                             <label for="">Alamat</label>
                             <input type="text" class="form-control" name="alamat" value="<?php echo htmlspecialchars($alamat ?? ''); ?>" required>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="">Lokasi Presensi</label>
-                            <input type="text" class="form-control" name="lokasi_presensi" value="<?php echo htmlspecialchars($lokasi_presensi ?? ''); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
