@@ -2,10 +2,7 @@
 session_start();
 if(!isset($_SESSION['login'])){
   header("location: ../../auth/login.php?pesan=belum_login");
-} else if ($_SESSION["role"] != 'guru'){
-  header("location:../../auth/login.php?pesan=tolak_akses");
 }
-
 include('../layout/header.php');
 require_once('../../config.php');
 ?>
