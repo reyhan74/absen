@@ -24,6 +24,7 @@ if (isset($_POST['submit'])) {
     $jenis_kelamin = htmlspecialchars($_POST['jenis_kelamin']);
     $alamat = htmlspecialchars($_POST['alamat']);
     $no_handphone = htmlspecialchars($_POST['no_handphone']);
+    $lokasi_presensi = htmlspecialchars($_POST['lokasi_presensi']);
     
     // Handle file upload
     $foto = $_FILES['foto']['name'];
@@ -58,6 +59,9 @@ if (isset($_POST['submit'])) {
     if (empty($no_handphone)) {
         $pesan_kesalahan[] = "No Handphone wajib diisi"; 
     }
+    if (empty($lokasi_presensi)) {
+        $pesan_kesalahan[] = "Lokasi Presensi wajib diisi"; 
+    }
     if (empty($foto)) {
         $pesan_kesalahan[] = "Foto wajib diisi"; 
     } else {
@@ -78,9 +82,9 @@ if (isset($_POST['submit'])) {
         // Move the uploaded file to the server
         if (move_uploaded_file($foto_tmp, $foto_path)) {
             // If validation is successful, save data to the database
-            $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, lokasi_presensi, foto) 
+            $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $lokasi_presensi, $foto_path);
+            $stmt->bind_param("ssssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path);
 
             if ($stmt->execute()) {
                 header("Location: users.php");
@@ -141,7 +145,6 @@ include('../layout/header.php');
                             <label for="">ROLE</label>
                             <select name="role" class="form-control" required>
                                 <option value="guru" <?php echo (isset($role) && $role == "guru") ? "selected" : ""; ?>>Guru</option>
-                                <option value="wali_murid" <?php echo (isset($role) && $role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>
                             </select>
                         </div>
 
@@ -166,6 +169,11 @@ include('../layout/header.php');
                         <div class="col-md-6 mb-3">
                             <label for="">Alamat</label>
                             <input type="text" class="form-control" name="alamat" value="<?php echo htmlspecialchars($alamat ?? ''); ?>" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="">Lokasi Presensi</label>
+                            <input type="text" class="form-control" name="lokasi_presensi" value="<?php echo htmlspecialchars($lokasi_presensi ?? ''); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
