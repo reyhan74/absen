@@ -105,9 +105,9 @@ if (isset($_POST['submit'])) {
         // Determine upload directory based on role
         $upload_dir = '';
         if ($role == 'guru') {
-            $upload_dir = '../../uploads/profile_guru/'; // Contoh: uploads/profile_guru
+            $upload_dir = '../../assets/img/profile_guru/'; // Contoh: uploads/profile_guru
         } elseif ($role == 'wali_murid') {
-            $upload_dir = '../../uploads/profile_wali/'; // Contoh: uploads/profile_wali
+            $upload_dir = '../../assets/img/profile_wali/'; // Contoh: uploads/profile_wali
         } else {
             // Handle other roles or default
             $upload_dir = '../../uploads/profiles/'; 
