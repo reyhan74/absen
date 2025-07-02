@@ -141,6 +141,7 @@ include('../layout/header.php');
                             <label for="">ROLE</label>
                             <select name="role" class="form-control" required>
                                 <option value="guru" <?php echo (isset($role) && $role == "guru") ? "selected" : ""; ?>>Guru</option>
+                                <option value="wali_murid" <?php echo (isset($role) && $role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>
                             </select>
                         </div>
 
