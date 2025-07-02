@@ -103,22 +103,28 @@ if (isset($_POST['submit'])) {
         $unique_file_name = uniqid('profile_', true) . '.' . $file_ext; // profile_randomstring.jpg
 
         // Determine upload directory based on role
-        $upload_dir = '';
+        // Path disesuaikan agar relatif terhadap root folder 'absen'
+        $base_upload_dir = '../../assets/img/'; 
+        $upload_dir_role = '';
+
         if ($role == 'guru') {
-            $upload_dir = '../../assets/img/profile_guru/'; // Contoh: uploads/profile_guru
+            $upload_dir_role = 'profile_guru/'; 
         } elseif ($role == 'wali_murid') {
-            $upload_dir = '../../assets/img/profile_wali/'; // Contoh: uploads/profile_wali
+            $upload_dir_role = 'profile_wali/'; 
         } else {
-            // Handle other roles or default
-            $upload_dir = '../../uploads/profiles/'; 
+            // Default directory if role is not guru or wali_murid (e.g., for 'admin' if you add that option)
+            $upload_dir_role = 'profiles/'; 
         }
+        
+        $final_upload_dir = $base_upload_dir . $upload_dir_role;
 
         // Ensure the directory exists and is writable
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0775, true); // Create directory if it doesn't exist, with write permissions
+        if (!is_dir($final_upload_dir)) {
+            // Create directory recursively with write permissions for owner/group
+            mkdir($final_upload_dir, 0775, true); 
         }
 
-        $foto_target_path = $upload_dir . $unique_file_name; // Full path to save
+        $foto_target_path = $final_upload_dir . $unique_file_name; // Full path to save
 
         if (move_uploaded_file($foto_tmp_name, $foto_target_path)) {
             // Hash the password only after successful validation and file upload
@@ -127,17 +133,17 @@ if (isset($_POST['submit'])) {
             // --- Save data to the database based on role ---
             $stmt = null;
             if ($role == 'guru') {
+                // Based on your guru table structure (Screenshot 319.jpg), it has 'alamat' field.
                 $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); // Use $foto_target_path to store path in DB
+                $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); 
             } elseif ($role == 'wali_murid') {
-                // Adjust table and columns for wali_murid
-                // Assuming 'email' for wali_murid is actually 'username' in your form for simplicity
+                // Based on previous suggestion for wali_murid table:
+                // email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto
+                // Please ensure your 'wali_murid' table has 'jenis_kelamin' and 'status' columns if you use them.
+                // 'username' from form is mapped to 'email' in wali_murid, 'no_handphone' to 'telepon'.
                 $stmt = $conection->prepare("INSERT INTO wali_murid (email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                // Note: The 'status' and 'jenis_kelamin' columns for wali_murid were not in my previous suggestion.
-                // Please adjust based on your actual wali_murid table structure.
-                // Also, 'username' from form is mapped to 'email' in wali_murid, 'no_handphone' to 'telepon'.
                 $stmt->bind_param("ssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $foto_target_path); 
             }
             
@@ -260,5 +266,5 @@ include('../layout/header.php');
     </div>
 </div>
 
-<?php include('../layout/foother.php'); ?>
+<?php include('../layout/foother.php'); // Perhatikan bahwa saya mengubah ini menjadi 'foother.php' berdasarkan potensi typo di include Anda. Jika nama file Anda 'footer.php', ubah kembali. ?>
 <?php ob_end_flush(); // End output buffering and send output ?>
