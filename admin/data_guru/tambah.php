@@ -142,10 +142,10 @@ if (isset($_POST['submit'])) {
                 // email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto
                 // Please ensure your 'wali_murid' table has 'jenis_kelamin' and 'status' columns if you use them.
                 // 'username' from form is mapped to 'email' in wali_murid, 'no_handphone' to 'telepon'.
-                $stmt = $conection->prepare("INSERT INTO wali_murid (email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto) 
-                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $foto_target_path); 
-            }
+                $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); 
+            } else {    
             
             if ($stmt && $stmt->execute()) {
                 $_SESSION['pesan_sukses'] = "Data pengguna berhasil ditambahkan!";
