@@ -3,7 +3,7 @@ session_start();
 if(!isset($_SESSION['login'])){
   header("location: ../../auth/login.php?pesan=belum_login");
 }
-include('./layout/header.php');
+include('../layout/header.php');
 require_once('../../config.php');
 ?>
 <main>
