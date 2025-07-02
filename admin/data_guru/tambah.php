@@ -145,7 +145,7 @@ if (isset($_POST['submit'])) {
                 $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); 
-            } else {    
+            }
             
             if ($stmt && $stmt->execute()) {
                 $_SESSION['pesan_sukses'] = "Data pengguna berhasil ditambahkan!";
