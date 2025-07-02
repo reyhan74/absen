@@ -2,7 +2,7 @@
 ob_start(); // Start output buffering
 session_start();
 
-// Check if the user is logged in
+// Check if the user is logged in and has 'admin' role
 if (!isset($_SESSION['login'])) {
     header("location: ../../auth/login.php?pesan=belum_login");
     exit();
@@ -11,13 +11,22 @@ if (!isset($_SESSION['login'])) {
     exit();
 }
 
-require_once('../../config.php');
+require_once('../../config.php'); // Pastikan $conection tersedia dari sini
+
+// Initialize variables for form values to prevent undefined variable notices
+$username = '';
+$status = '';
+$role = '';
+$nama = '';
+$jenis_kelamin = '';
+$alamat = '';
+$no_handphone = '';
 
 if (isset($_POST['submit'])) {
     // Retrieve and sanitize form data
     $username = htmlspecialchars($_POST['username']);
-    $password = htmlspecialchars($_POST['password']);
-    $confirm_password = htmlspecialchars($_POST['confirm_password']);
+    $password = $_POST['password']; // Jangan langsung htmlspecialchars, akan di-hash
+    $confirm_password = $_POST['confirm_password'];
     $status = htmlspecialchars($_POST['status']);
     $role = htmlspecialchars($_POST['role']);
     $nama = htmlspecialchars($_POST['nama']);
@@ -26,70 +35,129 @@ if (isset($_POST['submit'])) {
     $no_handphone = htmlspecialchars($_POST['no_handphone']);
     
     // Handle file upload
-    $foto = $_FILES['foto']['name'];
-    $foto_tmp = $_FILES['foto']['tmp_name'];
-    $foto_path = '../../siswa/home/profile' . basename($foto); // Set the path to save the file
+    $foto_name = $_FILES['foto']['name'];
+    $foto_tmp_name = $_FILES['foto']['tmp_name'];
+    $foto_error = $_FILES['foto']['error'];
+    $foto_size = $_FILES['foto']['size'];
+    $foto_type = $_FILES['foto']['type'];
 
     // Initialize an array for error messages
     $pesan_kesalahan = [];
 
-    // Validate input fields
+    // --- Input Validations ---
     if (empty($username)) {
-        $pesan_kesalahan[] = "Username wajib diisi";
+        $pesan_kesalahan[] = "Username wajib diisi.";
+    }
+    if (empty($password)) {
+        $pesan_kesalahan[] = "Password wajib diisi.";
     }
     if ($password !== $confirm_password) {
-        $pesan_kesalahan[] = "Password dan konfirmasi password tidak cocok";
+        $pesan_kesalahan[] = "Password dan konfirmasi password tidak cocok.";
     }
     if (empty($status)) {
-        $pesan_kesalahan[] = "Status wajib diisi";
+        $pesan_kesalahan[] = "Status wajib diisi.";
     }
     if (empty($role)) {
-        $pesan_kesalahan[] = "Role wajib diisi";
+        $pesan_kesalahan[] = "Role wajib diisi.";
     }
     if (empty($nama)) {
-        $pesan_kesalahan[] = "Nama wajib diisi";
+        $pesan_kesalahan[] = "Nama wajib diisi.";
     }
     if (empty($jenis_kelamin)) {
-        $pesan_kesalahan[] = "Jenis Kelamin wajib diisi";
+        $pesan_kesalahan[] = "Jenis Kelamin wajib diisi.";
     }
     if (empty($alamat)) {
-        $pesan_kesalahan[] = "Alamat wajib diisi";
+        $pesan_kesalahan[] = "Alamat wajib diisi.";
     }
     if (empty($no_handphone)) {
-        $pesan_kesalahan[] = "No Handphone wajib diisi"; 
+        $pesan_kesalahan[] = "No Handphone wajib diisi."; 
     }
-    if (empty($foto)) {
-        $pesan_kesalahan[] = "Foto wajib diisi"; 
+    
+    // --- Foto Validations ---
+    if ($foto_error === UPLOAD_ERR_NO_FILE) {
+        $pesan_kesalahan[] = "Foto wajib diunggah."; 
+    } elseif ($foto_error !== UPLOAD_ERR_OK) {
+        $pesan_kesalahan[] = "Terjadi kesalahan saat mengunggah foto. Error code: " . $foto_error;
     } else {
-        // Validate file upload
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($_FILES['foto']['type'], $allowed_types)) {
+        if (!in_array($foto_type, $allowed_types)) {
             $pesan_kesalahan[] = "Format foto tidak valid. Harap unggah file JPG, PNG, atau GIF.";
+        }
+        // Optional: Limit file size
+        $max_file_size = 2 * 1024 * 1024; // 2MB
+        if ($foto_size > $max_file_size) {
+            $pesan_kesalahan[] = "Ukuran foto terlalu besar. Maksimal 2MB.";
         }
     }
 
     // If there are validation errors, store them in the session
     if (!empty($pesan_kesalahan)) {
         $_SESSION['validasi'] = implode("<br>", $pesan_kesalahan);
+        // Redirect back to the form to display errors
+        header("Location: tambah.php"); 
+        exit();
     } else {
-        // Hash the password
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        // --- Process Photo Upload ---
+        // Create unique file name to avoid overwriting
+        $file_ext = strtolower(pathinfo($foto_name, PATHINFO_EXTENSION));
+        $unique_file_name = uniqid('profile_', true) . '.' . $file_ext; // profile_randomstring.jpg
 
-        // Move the uploaded file to the server
-        if (move_uploaded_file($foto_tmp, $foto_path)) {
-            // If validation is successful, save data to the database
-            $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path);
+        // Determine upload directory based on role
+        $upload_dir = '';
+        if ($role == 'guru') {
+            $upload_dir = '../../uploads/profile_guru/'; // Contoh: uploads/profile_guru
+        } elseif ($role == 'wali_murid') {
+            $upload_dir = '../../uploads/profile_wali/'; // Contoh: uploads/profile_wali
+        } else {
+            // Handle other roles or default
+            $upload_dir = '../../uploads/profiles/'; 
+        }
 
-            if ($stmt->execute()) {
-                header("Location: users.php");
+        // Ensure the directory exists and is writable
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0775, true); // Create directory if it doesn't exist, with write permissions
+        }
+
+        $foto_target_path = $upload_dir . $unique_file_name; // Full path to save
+
+        if (move_uploaded_file($foto_tmp_name, $foto_target_path)) {
+            // Hash the password only after successful validation and file upload
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            // --- Save data to the database based on role ---
+            $stmt = null;
+            if ($role == 'guru') {
+                $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); // Use $foto_target_path to store path in DB
+            } elseif ($role == 'wali_murid') {
+                // Adjust table and columns for wali_murid
+                // Assuming 'email' for wali_murid is actually 'username' in your form for simplicity
+                $stmt = $conection->prepare("INSERT INTO wali_murid (email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto) 
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                // Note: The 'status' and 'jenis_kelamin' columns for wali_murid were not in my previous suggestion.
+                // Please adjust based on your actual wali_murid table structure.
+                // Also, 'username' from form is mapped to 'email' in wali_murid, 'no_handphone' to 'telepon'.
+                $stmt->bind_param("ssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $foto_target_path); 
+            }
+            
+            if ($stmt && $stmt->execute()) {
+                $_SESSION['pesan_sukses'] = "Data pengguna berhasil ditambahkan!";
+                header("Location: users.php"); // Redirect to the user list page
                 exit();
             } else {
-                $_SESSION['validasi'] = "Terjadi kesalahan saat menyimpan data.";
+                $_SESSION['validasi'] = "Terjadi kesalahan saat menyimpan data ke database: " . ($stmt ? $stmt->error : "Statement error.");
+                // Redirect back to the form to display errors
+                header("Location: tambah.php"); 
+                exit();
             }
+            if ($stmt) $stmt->close();
+
         } else {
-            $_SESSION['validasi'] = "Terjadi kesalahan saat mengupload foto.";
+            $_SESSION['validasi'] = "Terjadi kesalahan saat mengupload foto. Pastikan folder tujuan ada dan memiliki izin tulis (CHMOD 775 atau 777).";
+            // Redirect back to the form to display errors
+            header("Location: tambah.php"); 
+            exit();
         }
     }
 }
@@ -97,7 +165,6 @@ if (isset($_POST['submit'])) {
 include('../layout/header.php');
 ?>
 
-<!-- HTML Form -->
 <div class="page-header d-print-none">
     <div class="container-xl">
         <div class="row g-2 align-items-center">
@@ -112,65 +179,77 @@ include('../layout/header.php');
     <div class="container-xl">
         <div class="card col-md-8">
             <div class="card-body">
+                <?php
+                // Display validation errors if any
+                if (isset($_SESSION['validasi'])) {
+                    echo '<div class="alert alert-danger">' . $_SESSION['validasi'] . '</div>';
+                    unset($_SESSION['validasi']); // Clear the session variable
+                }
+                // Display success message
+                if (isset($_SESSION['pesan_sukses'])) {
+                    echo '<div class="alert alert-success">' . $_SESSION['pesan_sukses'] . '</div>';
+                    unset($_SESSION['pesan_sukses']); // Clear the session variable
+                }
+                ?>
                 <form action="" method="POST" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="">USERNAME</label>
-                            <input type="text" class="form-control" name="username" value="<?php echo htmlspecialchars($username ?? ''); ?>" required>
+                            <label for="username" class="form-label">USERNAME</label>
+                            <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($username); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">PASSWORD</label>
-                            <input type="password" class="form-control" name="password" required>
+                            <label for="password" class="form-label">PASSWORD</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">KONFIRMASI PASSWORD</label>
-                            <input type="password" class="form-control" name="confirm_password" required>
+                            <label for="confirm_password" class="form-label">KONFIRMASI PASSWORD</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">STATUS</label>
-                            <select name="status" class="form-control" required>
-                                <option value="aktif" <?php echo (isset($status) && $status == "aktif") ? "selected" : ""; ?>>Aktif</option>
-                                <option value="tidak-aktif" <?php echo (isset($status) && $status == "tidak-aktif") ? "selected" : ""; ?>>Tidak Aktif</option>
+                            <label for="status" class="form-label">STATUS</label>
+                            <select name="status" id="status" class="form-control" required>
+                                <option value="aktif" <?php echo ($status == "aktif") ? "selected" : ""; ?>>Aktif</option>
+                                <option value="tidak-aktif" <?php echo ($status == "tidak-aktif") ? "selected" : ""; ?>>Tidak Aktif</option>
                             </select>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">ROLE</label>
-                            <select name="role" class="form-control" required>
-                                <option value="guru" <?php echo (isset($role) && $role == "guru") ? "selected" : ""; ?>>Guru</option>
-                                <option value="wali_murid" <?php echo (isset($role) && $role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>
+                            <label for="role" class="form-label">ROLE</label>
+                            <select name="role" id="role" class="form-control" required>
+                                <option value="guru" <?php echo ($role == "guru") ? "selected" : ""; ?>>Guru</option>
+                                <option value="wali_murid" <?php echo ($role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>
                             </select>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">NAMA</label>
-                            <input type="text" class="form-control" name="nama" value="<?php echo htmlspecialchars($nama ?? ''); ?>" required>
+                            <label for="nama" class="form-label">NAMA</label>
+                            <input type="text" class="form-control" id="nama" name="nama" value="<?php echo htmlspecialchars($nama); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">JENIS KELAMIN</label>
-                            <select name="jenis_kelamin" class="form-control" required>
-                                <option value="laki-laki" <?php echo (isset($jenis_kelamin) && $jenis_kelamin == "laki-laki") ? "selected" : ""; ?>>Laki-laki</option>
-                                <option value="perempuan" <?php echo (isset($jenis_kelamin) && $jenis_kelamin == "perempuan") ? "selected" : ""; ?>>Perempuan</option>
+                            <label for="jenis_kelamin" class="form-label">JENIS KELAMIN</label>
+                            <select name="jenis_kelamin" id="jenis_kelamin" class="form-control" required>
+                                <option value="laki-laki" <?php echo ($jenis_kelamin == "laki-laki") ? "selected" : ""; ?>>Laki-laki</option>
+                                <option value="perempuan" <?php echo ($jenis_kelamin == "perempuan") ? "selected" : ""; ?>>Perempuan</option>
                             </select>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">NO Handphone</label>
-                            <input type="text" class="form-control" name="no_handphone" value="<?php echo htmlspecialchars($no_handphone ?? ''); ?>" required>
+                            <label for="no_handphone" class="form-label">NO Handphone</label>
+                            <input type="text" class="form-control" id="no_handphone" name="no_handphone" value="<?php echo htmlspecialchars($no_handphone); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">Alamat</label>
-                            <input type="text" class="form-control" name="alamat" value="<?php echo htmlspecialchars($alamat ?? ''); ?>" required>
+                            <label for="alamat" class="form-label">Alamat</label>
+                            <input type="text" class="form-control" id="alamat" name="alamat" value="<?php echo htmlspecialchars($alamat); ?>" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label for="">Foto</label>
-                            <input type="file" class="form-control" name="foto" required>
+                            <label for="foto" class="form-label">Foto</label>
+                            <input type="file" class="form-control" id="foto" name="foto" required>
                         </div>
                     </div>
 
@@ -180,3 +259,6 @@ include('../layout/header.php');
         </div>
     </div>
 </div>
+
+<?php include('../layout/foother.php'); ?>
+<?php ob_end_flush(); // End output buffering and send output ?>
