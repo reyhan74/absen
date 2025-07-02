@@ -31,7 +31,7 @@ switch ($periode) {
         break;
 }
 
-// Query untuk ambil semua data sesuai filter
+// Query ambil data
 $query = "
     SELECT 
         s.nis, s.nama, s.kelas,
@@ -63,50 +63,61 @@ while ($row = mysqli_fetch_assoc($result)) {
 $spreadsheet = new Spreadsheet();
 $sheetIndex = 0;
 
-foreach ($dataByDate as $tanggal => $rows) {
-    if ($sheetIndex > 0) {
-        $spreadsheet->createSheet();
+if (!empty($dataByDate)) {
+    foreach ($dataByDate as $tanggal => $rows) {
+        if ($sheetIndex > 0) {
+            $spreadsheet->createSheet();
+        }
+        $spreadsheet->setActiveSheetIndex($sheetIndex);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Batas nama sheet 31 karakter
+        $title = date('d-m-Y', strtotime($tanggal));
+        $title = substr($title, 0, 31);
+        $sheet->setTitle($title);
+
+        // Header kolom
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'NIS');
+        $sheet->setCellValue('C1', 'Nama');
+        $sheet->setCellValue('D1', 'Kelas');
+        $sheet->setCellValue('E1', 'Tanggal');
+        $sheet->setCellValue('F1', 'Jam Masuk');
+        $sheet->setCellValue('G1', 'Lokasi');
+        $sheet->setCellValue('H1', 'Foto Masuk');
+        $sheet->setCellValue('I1', 'Jam Keluar');
+        $sheet->setCellValue('J1', 'Foto Keluar');
+
+        $no = 1;
+        $rowExcel = 2;
+
+        foreach ($rows as $row) {
+            $sheet->setCellValue("A$rowExcel", $no++);
+            $sheet->setCellValue("B$rowExcel", $row['nis']);
+            $sheet->setCellValue("C$rowExcel", $row['nama']);
+            $sheet->setCellValue("D$rowExcel", $row['kelas'] ?? '-');
+            $sheet->setCellValue("E$rowExcel", $row['tanggal_masuk']);
+            $sheet->setCellValue("F$rowExcel", $row['jam_masuk']);
+            $sheet->setCellValue("G$rowExcel", $row['nama_lokasi'] ?? '-');
+            $sheet->setCellValue("H$rowExcel", $row['foto_masuk'] ?? '-');
+            $sheet->setCellValue("I$rowExcel", $row['jam_keluar'] ?? '-');
+            $sheet->setCellValue("J$rowExcel", $row['foto_keluar'] ?? '-');
+
+            $rowExcel++;
+        }
+
+        // Auto width kolom
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $sheetIndex++;
     }
-    $spreadsheet->setActiveSheetIndex($sheetIndex);
+} else {
+    // Jika data kosong
     $sheet = $spreadsheet->getActiveSheet();
-    $sheet->setTitle(date('d-m-Y', strtotime($tanggal)));
-
-    // Header
-    $sheet->setCellValue('A1', 'No');
-    $sheet->setCellValue('B1', 'NIS');
-    $sheet->setCellValue('C1', 'Nama');
-    $sheet->setCellValue('D1', 'Kelas');
-    $sheet->setCellValue('E1', 'Tanggal');
-    $sheet->setCellValue('F1', 'Jam Masuk');
-    $sheet->setCellValue('G1', 'Lokasi');
-    $sheet->setCellValue('H1', 'Foto Masuk');
-    $sheet->setCellValue('I1', 'Jam Keluar');
-    $sheet->setCellValue('J1', 'Foto Keluar');
-
-    $no = 1;
-    $rowExcel = 2;
-
-    foreach ($rows as $row) {
-        $sheet->setCellValue("A$rowExcel", $no++);
-        $sheet->setCellValue("B$rowExcel", $row['nis']);
-        $sheet->setCellValue("C$rowExcel", $row['nama']);
-        $sheet->setCellValue("D$rowExcel", $row['kelas'] ?? '-');
-        $sheet->setCellValue("E$rowExcel", $row['tanggal_masuk']);
-        $sheet->setCellValue("F$rowExcel", $row['jam_masuk']);
-        $sheet->setCellValue("G$rowExcel", $row['nama_lokasi'] ?? '-');
-        $sheet->setCellValue("H$rowExcel", $row['foto_masuk'] ?? '-');
-        $sheet->setCellValue("I$rowExcel", $row['jam_keluar'] ?? '-');
-        $sheet->setCellValue("J$rowExcel", $row['foto_keluar'] ?? '-');
-
-        $rowExcel++;
-    }
-
-    // Lebarkan kolom agar lebih rapi
-    foreach (range('A', 'J') as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-    }
-
-    $sheetIndex++;
+    $sheet->setTitle("Data Kosong");
+    $sheet->setCellValue("A1", "Tidak ada data presensi.");
 }
 
 // Nama file download
