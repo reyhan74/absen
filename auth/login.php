@@ -42,6 +42,10 @@ if (isset($_POST["login"])) {
                 if ($user['role'] === 'admin') {
                     header("location: ../admin/home/home.php");
                     exit();
+                }
+                if ($user['role'] === 'wali_murid') {
+                    header("location: ../wali_murid/home/");
+                    exit();
                 } else {
                     header("location: ../pegawai/home/home.php");
                     exit();
