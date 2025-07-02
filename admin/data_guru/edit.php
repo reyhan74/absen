@@ -37,7 +37,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $jenis_kelamin = htmlspecialchars($_POST['jenis_kelamin']);
     $alamat = htmlspecialchars($_POST['alamat']);
     $no_handphone = htmlspecialchars($_POST['no_handphone']);
-    $lokasi_presensi = htmlspecialchars($_POST['lokasi_presensi']);
     $password_baru = $_POST['password'] ?? '';
     $foto_path = $user['foto'];
 
@@ -48,7 +47,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (empty($jenis_kelamin)) $pesan_kesalahan[] = "Jenis Kelamin wajib diisi";
     if (empty($alamat)) $pesan_kesalahan[] = "Alamat wajib diisi";
     if (empty($no_handphone)) $pesan_kesalahan[] = "No Handphone wajib diisi";
-    if (empty($lokasi_presensi)) $pesan_kesalahan[] = "Lokasi Presensi wajib diisi";
 
     if (!empty($_FILES['foto']['name'])) {
         $foto = $_FILES['foto']['name'];
@@ -71,11 +69,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (empty($pesan_kesalahan)) {
         if (!empty($password_baru)) {
             $hashed_password = password_hash($password_baru, PASSWORD_DEFAULT);
-            $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, lokasi_presensi=?, foto=?, password=? WHERE id=?");
-            $stmt->bind_param("ssssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $lokasi_presensi, $foto_path, $hashed_password, $id);
+            $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, foto=?, password=? WHERE id=?");
+            $stmt->bind_param("ssssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $hashed_password, $id);
         } else {
-            $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, lokasi_presensi=?, foto=? WHERE id=?");
-            $stmt->bind_param("sssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $lokasi_presensi, $foto_path, $id);
+            $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, foto=? WHERE id=?");
+            $stmt->bind_param("sssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $id);
         }
 
         if ($stmt->execute()) {
@@ -148,10 +146,6 @@ include('../layout/header.php');
                         <div class="col-md-6 mb-3">
                             <label>Alamat</label>
                             <input type="text" class="form-control" name="alamat" value="<?= htmlspecialchars($user['alamat']) ?>" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label>Lokasi Presensi</label>
-                            <input type="text" class="form-control" name="lokasi_presensi" value="<?= htmlspecialchars($user['lokasi_presensi']) ?>" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label>Foto</label>
