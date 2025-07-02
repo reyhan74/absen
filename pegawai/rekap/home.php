@@ -61,7 +61,7 @@ if (!$result) {
 <div class="page-header d-print-none">
     <div class="container-xl d-flex justify-content-between align-items-center">
         <h2 class="page-title">Rekap Presensi Siswa</h2>
-        <a href="export_excel.php?periode=hari" class="btn btn-success">Export Hari Ini</a>
+        <a href="export_excel.php" class="btn btn-success">Export Hari Ini</a>
     </div>
 </div>
 
