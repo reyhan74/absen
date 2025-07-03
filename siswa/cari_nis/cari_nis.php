@@ -90,7 +90,7 @@ require_once('../../config.php');
 
       <?php if (!isset($_SESSION['user'])): ?>
         <div style="margin-top: 10px;">
-          <a href="../../login.php" class="btn-login">Login</a>
+          <a href="/" class="btn-login">Login</a>
         </div>
       <?php endif; ?>
     </form>
