@@ -226,7 +226,7 @@ include('../layout/header.php');
                             <label for="role" class="form-label">ROLE</label>
                             <select name="role" id="role" class="form-control" required>
                                 <option value="guru" <?php echo ($role == "guru") ? "selected" : ""; ?>>Guru</option>
-                                <option value="wali_murid" <?php echo ($role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>
+                                <!--<option value="wali_murid" <?php echo ($role == "wali_murid") ? "selected" : ""; ?>>Wali Murid</option>-->
                             </select>
                         </div>
 
