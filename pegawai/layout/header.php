@@ -9,15 +9,14 @@ $nama = $_SESSION['nama'] ?? 'User';
 $foto = $_SESSION['foto'] ?? '';
 
 // Fungsi untuk ambil path foto
-function getProfilePhoto($foto)
-{
-    if (!empty($foto) && file_exists(__DIR__ . "/" . $foto)) {
-        return '/' . htmlspecialchars($foto);
+function getProfilePhoto($foto) {
+    $path = __DIR__ . "/" . $foto;
+    if (!empty($foto) && file_exists($path)) {
+        return htmlspecialchars($foto);
     } else {
         return '../../assets/img/download.jpg';
     }
 }
-
 // Ambil path foto hasil function
 $foto_path = getProfilePhoto($foto);
 ?>
