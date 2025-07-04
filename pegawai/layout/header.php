@@ -10,7 +10,7 @@ $foto = $_SESSION['foto'] ?? '';
 
 // Fungsi untuk ambil path foto
 function getProfilePhoto($foto) {
-    $path = __DIR__ . "/" . $foto;
+    $path = __DIR__ . $foto;
     if (!empty($foto) && file_exists($path)) {
         return htmlspecialchars($foto);
     } else {
