@@ -70,8 +70,8 @@ $foto_path = getProfilePhoto($foto);
           </button>
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
             <a href=".">
-              <h1>SMK CANDA BHIRAWA PARE</h1>
-            </a>
+              <h1 class="d-none d-md-block">SMK CANDA BHIRAWA PARE</h1> 
+              </a>
           </h1>
           <div class="navbar-nav flex-row order-md-last">
             <div class="d-none d-md-flex">
