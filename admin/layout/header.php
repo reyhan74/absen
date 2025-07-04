@@ -47,7 +47,7 @@
           </button>
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
             <a href=".">
-              <h1>SMK CANDA BHIRAWA</h1>
+              <h1>SMK CANDA BHIRAWA PARE</h1>
             </a>
           </h1>
           <div class="navbar-nav flex-row order-md-last">
