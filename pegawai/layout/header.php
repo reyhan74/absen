@@ -11,8 +11,8 @@ $foto = $_SESSION['foto'] ?? '';
 // Fungsi untuk ambil path foto
 function getProfilePhoto($foto)
 {
-    if (!empty($foto) && file_exists(__DIR__ . "/../home/profile/" . $foto)) {
-        return '../home/profile/' . htmlspecialchars($foto);
+    if (!empty($foto) && file_exists(__DIR__ . "/../home/profile/profile_guru" . $foto)) {
+        return '../../assets/img/profile_guru' . htmlspecialchars($foto);
     } else {
         return '../../assets/img/download.jpg';
     }
@@ -23,7 +23,7 @@ $foto_path = getProfilePhoto($foto);
 ?>
 
 <?php require_once('../../config.php') ?>
-<!doctype html>
+
 <!--
 <?= base_url('')?>
 * Tabler - Premium and Open Source dashboard template with responsive and high quality UI.
@@ -71,7 +71,7 @@ $foto_path = getProfilePhoto($foto);
           </button>
           <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
             <a href=".">
-              <h1>SMK CANDA BHIRAWA PAREss</h1>
+              <h1>SMK CANDA BHIRAWA PARE</h1>
             </a>
           </h1>
           <div class="navbar-nav flex-row order-md-last">
