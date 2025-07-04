@@ -141,13 +141,56 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
   let jamMasukDB = null;
   let jamPulangDB = null;
   let lokasiDipilih = null;
+  let radius = 0;
+  let kantorLat = 0;
+  let kantorLong = 0;
+
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // in meters
+  }
+
+  function checkLocationPermission() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        const userLat = pos.coords.latitude;
+        const userLong = pos.coords.longitude;
+
+        const jarak = getDistance(kantorLat, kantorLong, userLat, userLong);
+
+        if (jarak > radius) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Lokasi Tidak Sesuai',
+            text: 'Anda berada di luar radius yang ditentukan!'
+          });
+          document.getElementById("masukSection").style.display = "none";
+          document.getElementById("keluarSection").style.display = "none";
+          return;
+        }
+
+        updateTime();
+      }, () => {
+        Swal.fire('Gagal Mengakses Lokasi', 'Izinkan akses lokasi di browser Anda', 'error');
+      });
+    } else {
+      Swal.fire('Browser tidak mendukung', 'Perangkat tidak mendukung geolokasi', 'error');
+    }
+  }
 
   function updateTime() {
     const waktu = new Date();
     const jam = waktu.getHours().toString().padStart(2, '0');
     const menit = waktu.getMinutes().toString().padStart(2, '0');
     const jamMenit = `${jam}:${menit}`;
-
     const tanggal = waktu.getDate();
     const bulan = namaBulan[waktu.getMonth()];
     const tahun = waktu.getFullYear();
@@ -167,13 +210,9 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
         document.getElementById("masukSection").style.display = "block";
         document.getElementById("keluarSection").style.display = "none";
         document.getElementById("status_masuk").value = (jamMenit > jamMasukDB) ? "Terlambat" : "Tepat Waktu";
-        document.getElementById("btnMasuk").disabled = false;
-        document.getElementById("btnKeluar").disabled = true;
       } else if (jamMenit >= jamPulangDB) {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "block";
-        document.getElementById("btnMasuk").disabled = true;
-        document.getElementById("btnKeluar").disabled = false;
       } else {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "none";
@@ -195,8 +234,12 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
     }
     jamMasukDB = selected.jam_masuk?.substring(0,5);
     jamPulangDB = selected.jam_pulang?.substring(0,5);
+    radius = parseFloat(selected.radius);
+    kantorLat = parseFloat(selected.latitut);
+    kantorLong = parseFloat(selected.longitude);
     lokasiDipilih = selected;
-    updateTime();
+
+    checkLocationPermission();
   });
 </script>
 
