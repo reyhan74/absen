@@ -52,24 +52,26 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
           <div class="card-header text-center">
             <h5>Pilih Lokasi & Presensi</h5>
           </div>
-          <div class="card-body">
+          <div class="card-body text-center">
 
             <!-- Pilih Lokasi -->
-            <form id="lokasiForm" class="mb-4 text-center">
+            <form id="lokasiForm" class="mb-4">
               <label for="lokasiSelect" class="form-label fw-bold">Pilih Lokasi</label>
               <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
                 <option value="">-- Pilih Lokasi --</option>
                 <?php foreach ($lokasi_presensi as $lokasi): ?>
+                  <?php if (!empty($lokasi['jam_masuk']) && !empty($lokasi['jam_pulang'])): ?>
                   <option value='<?= json_encode($lokasi) ?>'>
                     <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
                   </option>
+                  <?php endif; ?>
                 <?php endforeach; ?>
               </select>
             </form>
 
-            <div class="row">
-              <!-- Presensi Masuk -->
-              <div class="col-md-6 border-end" id="masukSection" style="display: none;">
+            <!-- Presensi Section -->
+            <div class="row justify-content-center">
+              <div class="col-md-6" id="masukSection" style="display: none;">
                 <div class="text-center">
                   <h6>Presensi Masuk</h6>
                   <div class="parent_date mb-1">
@@ -80,7 +82,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                   <div class="parent_clock mb-2">
                     <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
                   </div>
-                  <form action="../presensi/presensi_masuk.php" method="POST">
+                  <form id="formMasuk" action="../presensi/presensi_masuk.php" method="POST">
                     <input type="hidden" name="nama_lokasi">
                     <input type="hidden" name="latitude_kantor">
                     <input type="hidden" name="longitude_kantor">
@@ -91,12 +93,11 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
                     <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
                     <input type="hidden" name="status_masuk" id="status_masuk" value="">
-                    <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
+                    <button type="submit" name="tombol_masuk" id="btnMasuk" class="btn btn-primary">Masuk</button>
                   </form>
                 </div>
               </div>
 
-              <!-- Presensi Keluar -->
               <div class="col-md-6" id="keluarSection" style="display: none;">
                 <div class="text-center">
                   <h6>Presensi Keluar</h6>
@@ -108,7 +109,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                   <div class="parent_clock mb-2">
                     <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
                   </div>
-                  <form action="../presensi/presensi_keluar.php" method="POST">
+                  <form id="formKeluar" action="../presensi/presensi_keluar.php" method="POST">
                     <input type="hidden" name="nama_lokasi">
                     <input type="hidden" name="latitude_kantor">
                     <input type="hidden" name="longitude_kantor">
@@ -118,7 +119,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
                     <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
                     <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
-                    <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
+                    <button type="submit" name="tombol_keluar" id="btnKeluar" class="btn btn-danger">Keluar</button>
                   </form>
                 </div>
               </div>
@@ -139,6 +140,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
 
   let jamMasukDB = null;
   let jamPulangDB = null;
+  let lokasiDipilih = null;
 
   function updateTime() {
     const waktu = new Date();
@@ -165,9 +167,13 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
         document.getElementById("masukSection").style.display = "block";
         document.getElementById("keluarSection").style.display = "none";
         document.getElementById("status_masuk").value = (jamMenit > jamMasukDB) ? "Terlambat" : "Tepat Waktu";
+        document.getElementById("btnMasuk").disabled = false;
+        document.getElementById("btnKeluar").disabled = true;
       } else if (jamMenit >= jamPulangDB) {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "block";
+        document.getElementById("btnMasuk").disabled = true;
+        document.getElementById("btnKeluar").disabled = false;
       } else {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "none";
@@ -176,12 +182,20 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
   }
 
   setInterval(updateTime, 1000);
-  updateTime();
 
   document.getElementById("lokasiSelect").addEventListener("change", function () {
     const selected = JSON.parse(this.value);
+    if (!selected || !selected.jam_masuk || !selected.jam_pulang) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Data Lokasi Tidak Lengkap',
+        text: 'Silakan pilih lokasi dengan jam masuk dan pulang yang valid.'
+      });
+      return;
+    }
     jamMasukDB = selected.jam_masuk?.substring(0,5);
     jamPulangDB = selected.jam_pulang?.substring(0,5);
+    lokasiDipilih = selected;
     updateTime();
   });
 </script>
