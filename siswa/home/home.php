@@ -57,86 +57,87 @@ if (isset($_GET['pesan'])) {
 
 <div class="page-body">
   <div class="container-xl">
-    <div class="row">
-      <div class="col-md-2"></div>
+    <div class="row justify-content-center mt-4">
+  <div class="col-md-10">
+    <div class="card">
+      <div class="card-header text-center">
+        <h5>Pilih Lokasi & Presensi</h5>
+      </div>
+      <div class="card-body">
 
-      <div class="col-md-3 mt-2">
-        <div class="card text-center">
-          <div class="card-header">Pilih Lokasi</div>
-          <div class="card-body">
-            <form id="lokasiForm">
-              <select name="lokasi" id="lokasiSelect" class="form-control" required>
-                <option value="">Pilih Lokasi</option>
-                <?php foreach ($lokasi_presensi as $lokasi): ?>
-                  <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
-                    <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </form>
+        <!-- Pilih Lokasi -->
+        <form id="lokasiForm" class="mb-4 text-center">
+          <label for="lokasiSelect" class="form-label fw-bold">Pilih Lokasi</label>
+          <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
+            <option value="">-- Pilih Lokasi --</option>
+            <?php foreach ($lokasi_presensi as $lokasi): ?>
+              <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
+                <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </form>
+
+        <div class="row">
+          <!-- Presensi Masuk -->
+          <div class="col-md-6 border-end">
+            <div class="text-center">
+              <h6>Presensi Masuk</h6>
+              <div class="parent_date mb-1">
+                <div id="tanggal_masuk"></div><div class="ms-1"></div>
+                <div id="bulan_masuk"></div><div class="ms-1"></div>
+                <div id="tahun_masuk"></div>
+              </div>
+              <div class="parent_clock mb-2">
+                <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
+              </div>
+              <form action="../presensi/presensi_masuk.php" method="POST">
+                <input type="hidden" name="nama_lokasi">
+                <input type="hidden" name="latitude_kantor">
+                <input type="hidden" name="longitude_kantor">
+                <input type="hidden" name="radius">
+                <input type="hidden" name="zona_waktu">
+                <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
+                <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
+                <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
+                <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
+                <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Presensi Keluar -->
+          <div class="col-md-6">
+            <div class="text-center">
+              <h6>Presensi Keluar</h6>
+              <div class="parent_date mb-1">
+                <div id="tanggal_keluar"></div><div class="ms-1"></div>
+                <div id="bulan_keluar"></div><div class="ms-1"></div>
+                <div id="tahun_keluar"></div>
+              </div>
+              <div class="parent_clock mb-2">
+                <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
+              </div>
+              <form action="../presensi/presensi_keluar.php" method="POST">
+                <input type="hidden" name="nama_lokasi">
+                <input type="hidden" name="latitude_kantor">
+                <input type="hidden" name="longitude_kantor">
+                <input type="hidden" name="radius">
+                <input type="hidden" name="zona_waktu">
+                <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_keluar">
+                <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
+                <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
+                <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
+                <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
+              </form>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-header">Presensi Masuk</div>
-          <div class="card-body">
-            <div class="parent_date">
-              <div id="tanggal_masuk"></div><div class="ms-2"></div>
-              <div id="bulan_masuk"></div><div class="ms-2"></div>
-              <div id="tahun_masuk"></div>
-            </div>
-            <div class="parent_clock">
-              <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
-            </div>
-            <br>
-            <form action="../presensi/presensi_masuk.php" method="POST">
-              <input type="hidden" name="nama_lokasi">
-              <input type="hidden" name="latitude_kantor">
-              <input type="hidden" name="longitude_kantor">
-              <input type="hidden" name="radius">
-              <input type="hidden" name="zona_waktu">
-              <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
-              <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
-              <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
-              <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
-              <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
-            </form>
-          </div>
-        </div>
-      </div>
+        <!-- Status Lokasi -->
+        <div id="status" class="mt-3 text-center text-muted fw-semibold"></div>
 
-      <div class="col-md-3">
-        <div class="card text-center">
-          <div class="card-header">Presensi Keluar</div>
-          <div class="card-body">
-            <div class="parent_date">
-              <div id="tanggal_keluar"></div><div class="ms-2"></div>
-              <div id="bulan_keluar"></div><div class="ms-2"></div>
-              <div id="tahun_keluar"></div>
-            </div>
-            <div class="parent_clock">
-              <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
-            </div>
-            <br>
-            <form action="../presensi/presensi_keluar.php" method="POST">
-              <input type="hidden" name="nama_lokasi">
-              <input type="hidden" name="latitude_kantor">
-              <input type="hidden" name="longitude_kantor">
-              <input type="hidden" name="radius">
-              <input type="hidden" name="zona_waktu">
-              <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_keluar">
-              <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
-              <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
-              <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
-              <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
-            </form>
-          </div>
-        </div>
       </div>
-
-      <div class="col-md-2"></div>
     </div>
   </div>
 </div>
