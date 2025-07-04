@@ -76,19 +76,31 @@ if (isset($_POST['tombol_keluar'])) {
     }
 ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+<script>
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const iframe = document.getElementById('map-iframe');
+        const mapContainer = document.getElementById('map-container');
+
+        if (lat !== 0 && lon !== 0) {
+            iframe.src = `https://maps.google.com/maps?q=${lat},${lon}&hl=es&z=14&output=embed`;
+            mapContainer.style.display = 'block';
+        } else {
+            mapContainer.innerHTML = '<p class="text-danger">Koordinat tidak tersedia.</p>';
+        }
+    }, function(error) {
+        document.getElementById('map-container').innerHTML = '<p class="text-danger">Gagal mengambil lokasi: ' + error.message + '</p>';
+    });
+</script>
 
 <div class="page-body">
     <div class="container-xl">
         <div class="row">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-body">
-                        <?php if ($latitude_pegawai != 0 && $longitude_pegawai != 0): ?>
-                        <iframe src="https://maps.google.com/maps?q=<?= $latitude_pegawai ?>,<?= $longitude_pegawai ?>&hl=es&z=14&output=embed"
-                                width="100%" height="400" style="border:0;" allowfullscreen></iframe>
-                        <?php else: ?>
-                        <p class="text-danger">Koordinat tidak tersedia.</p>
-                        <?php endif; ?>
+                    <div class="card-body" id="map-container">
+                        <iframe id="map-iframe" width="100%" height="400" style="border:0; display:none;" allowfullscreen></iframe>
                     </div>
                 </div>
             </div>
