@@ -106,26 +106,24 @@ if (isset($_GET['pesan'])) {
       <div class="col-md-2"></div>
 
       <!-- Pilih Lokasi -->
+      <!-- Pilih Lokasi (otomatis deteksi lokasi saat dipilih) -->
       <div class="col-md-3 mt-2">
         <div class="card text-center">
           <div class="card-header">Pilih Lokasi</div>
           <div class="card-body">
-            <form action="" method="POST">
-              <select name="lokasi" class="form-control" required>
+            <form id="lokasiForm">
+              <select name="lokasi" id="lokasiSelect" class="form-control" required>
                 <option value="">Pilih Lokasi</option>
                 <?php foreach ($lokasi_presensi as $lokasi): ?>
-                  <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>" <?= ($selected_location === $lokasi['nama_lokasi']) ? 'selected' : '' ?>>
+                  <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
                     <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
                   </option>
                 <?php endforeach; ?>
               </select>
-              <br>
-              <button type="submit" class="btn btn-success">Pilih</button>
             </form>
           </div>
         </div>
       </div>
-
       <!-- Presensi Masuk -->
       <div class="col-md-3">
         <div class="card text-center">
