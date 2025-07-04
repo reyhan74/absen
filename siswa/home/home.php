@@ -144,7 +144,8 @@ if (isset($_GET['pesan'])) {
 <div id="status" style="text-align: center; margin-top: 20px;"></div>
 
 <script>
-  const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+  const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
   function updateTime() {
     const waktu = new Date();
@@ -155,19 +156,17 @@ if (isset($_GET['pesan'])) {
     const menit = waktu.getMinutes().toString().padStart(2, '0');
     const detik = waktu.getSeconds().toString().padStart(2, '0');
 
-    document.getElementById("tanggal_masuk").innerHTML = tanggal;
-    document.getElementById("bulan_masuk").innerHTML = bulan;
-    document.getElementById("tahun_masuk").innerHTML = tahun;
-    document.getElementById("jam_masuk").innerHTML = jam;
-    document.getElementById("menit_masuk").innerHTML = menit;
-    document.getElementById("detik_masuk").innerHTML = detik;
+    const setTime = (prefix) => {
+      document.getElementById(`tanggal_${prefix}`).innerHTML = tanggal;
+      document.getElementById(`bulan_${prefix}`).innerHTML = bulan;
+      document.getElementById(`tahun_${prefix}`).innerHTML = tahun;
+      document.getElementById(`jam_${prefix}`).innerHTML = jam;
+      document.getElementById(`menit_${prefix}`).innerHTML = menit;
+      document.getElementById(`detik_${prefix}`).innerHTML = detik;
+    };
 
-    document.getElementById("tanggal_keluar").innerHTML = tanggal;
-    document.getElementById("bulan_keluar").innerHTML = bulan;
-    document.getElementById("tahun_keluar").innerHTML = tahun;
-    document.getElementById("jam_keluar").innerHTML = jam;
-    document.getElementById("menit_keluar").innerHTML = menit;
-    document.getElementById("detik_keluar").innerHTML = detik;
+    setTime("masuk");
+    setTime("keluar");
   }
 
   setInterval(updateTime, 1000);
@@ -193,22 +192,24 @@ if (isset($_GET['pesan'])) {
       navigator.geolocation.getCurrentPosition(function(position) {
         const latPegawai = position.coords.latitude;
         const lonPegawai = position.coords.longitude;
-
         const jarak = getDistanceFromLatLonInKm(latPegawai, lonPegawai, parseFloat(latKantor), parseFloat(lonKantor));
 
         if (jarak > radius) {
           document.getElementById("status").innerText = `Diluar radius! Jarak: ${Math.round(jarak)} meter`;
-          Swal.fire({ icon: "error", title: "Diluar Radius!", text: `Jarak Anda ${Math.round(jarak)} meter di luar jangkauan lokasi.` });
-          document.querySelector("button[name='tombol_masuk']").disabled = true;
-          document.querySelector("button[name='tombol_keluar']").disabled = true;
+          Swal.fire({
+            icon: "error",
+            title: "Diluar Radius!",
+            text: `Jarak Anda ${Math.round(jarak)} meter di luar jangkauan lokasi.`,
+          });
+          document.querySelectorAll("button[name='tombol_masuk'], button[name='tombol_keluar']").forEach(btn => btn.disabled = true);
         } else {
           document.getElementById("latitude_pegawai_masuk").value = latPegawai;
           document.getElementById("longitude_pegawai_masuk").value = lonPegawai;
           document.getElementById("latitude_pegawai_keluar").value = latPegawai;
           document.getElementById("longitude_pegawai_keluar").value = lonPegawai;
+
           document.getElementById("status").innerText = "Lokasi berhasil diambil!";
-          document.querySelector("button[name='tombol_masuk']").disabled = false;
-          document.querySelector("button[name='tombol_keluar']").disabled = false;
+          document.querySelectorAll("button[name='tombol_masuk'], button[name='tombol_keluar']").forEach(btn => btn.disabled = false);
         }
       }, showError);
     } else {
@@ -227,6 +228,7 @@ if (isset($_GET['pesan'])) {
     Swal.fire({ icon: "error", title: "Lokasi Error", text: message });
   }
 
+  // Event saat lokasi dipilih
   document.getElementById("lokasiSelect").addEventListener("change", function () {
     const lokasi = this.value;
     if (!lokasi) return;
@@ -238,6 +240,8 @@ if (isset($_GET['pesan'])) {
     })
     .then(res => res.json())
     .then(data => {
+      console.log("RESPON LOKASI:", data);
+
       if (data && !data.error) {
         document.querySelectorAll("input[name='nama_lokasi']").forEach(el => el.value = data.nama_lokasi);
         document.querySelectorAll("input[name='latitude_kantor']").forEach(el => el.value = data.latitut);
@@ -246,9 +250,24 @@ if (isset($_GET['pesan'])) {
         document.querySelectorAll("input[name='zona_waktu']").forEach(el => el.value = data.zona_waktu);
 
         getLocation(data.latitut, data.longitude, data.radius);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Gagal Ambil Lokasi",
+          text: data.error || "Data lokasi tidak ditemukan.",
+        });
       }
+    })
+    .catch(err => {
+      console.error("Fetch Gagal:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Kesalahan",
+        text: "Gagal menghubungi server. Coba lagi nanti.",
+      });
     });
   });
 </script>
+
 
 <?php include('../layout/foother.php'); ?>
