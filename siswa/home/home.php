@@ -144,9 +144,10 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
   let radius = 0;
   let kantorLat = 0;
   let kantorLong = 0;
+  let lokasiValid = false;
 
   function getDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371e3; // meters
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
@@ -155,7 +156,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // in meters
+    return R * c;
   }
 
   function checkLocationPermission() {
@@ -163,7 +164,6 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
       navigator.geolocation.getCurrentPosition(pos => {
         const userLat = pos.coords.latitude;
         const userLong = pos.coords.longitude;
-
         const jarak = getDistance(kantorLat, kantorLong, userLat, userLong);
 
         if (jarak > radius) {
@@ -172,9 +172,14 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
             title: 'Lokasi Tidak Sesuai',
             text: 'Anda berada di luar radius yang ditentukan!'
           });
-          document.getElementById("masukSection").style.display = "none";
-          document.getElementById("keluarSection").style.display = "none";
+          lokasiValid = false;
+          document.getElementById("btnMasuk").disabled = true;
+          document.getElementById("btnKeluar").disabled = true;
           return;
+        } else {
+          lokasiValid = true;
+          document.getElementById("btnMasuk").disabled = false;
+          document.getElementById("btnKeluar").disabled = false;
         }
 
         updateTime();
@@ -205,7 +210,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
       document.getElementById(`detik_${prefix}`).innerHTML = detik;
     });
 
-    if (jamMasukDB && jamPulangDB) {
+    if (jamMasukDB && jamPulangDB && lokasiValid) {
       if (jamMenit >= jamMasukDB && jamMenit < jamPulangDB) {
         document.getElementById("masukSection").style.display = "block";
         document.getElementById("keluarSection").style.display = "none";
