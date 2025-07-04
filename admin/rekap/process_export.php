@@ -19,155 +19,196 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-// --- 1. Get POST Data and Sanitize ---
-$export_type = $_POST['export_type'] ?? '';
-$kelas_filter = $_POST['kelas_filter'] ?? 'all';
-$tanggal = $_POST['tanggal'] ?? ''; // Only for 'harian'
-$bulan = $_POST['bulan'] ?? '';     // For 'bulanan'
-$tahun = $_POST['tahun'] ?? '';     // For 'bulanan' or 'tahunan'
+// --- Get export parameters ---
+$exportType = $_POST['export_type'] ?? '';
+$tanggal = $_POST['tanggal'] ?? '';
+$bulan = $_POST['bulan'] ?? '';
+$tahun = $_POST['tahun'] ?? '';
+$idSiswa = $_POST['id_siswa'] ?? '';
+$kelasFilter = $_POST['kelas_filter'] ?? 'all';
 
-// Sanitize inputs
-$export_type = mysqli_real_escape_string($conection, $export_type);
-$kelas_filter = mysqli_real_escape_string($conection, $kelas_filter);
-$tanggal = mysqli_real_escape_string($conection, $tanggal);
-$bulan = mysqli_real_escape_string($conection, $bulan);
-$tahun = mysqli_real_escape_string($conection, $tahun);
+$fileName = "Rekap_Presensi_";
+$whereClause = "WHERE p.tanggal_masuk IS NOT NULL ";
+$params = [];
+$paramTypes = "";
 
-// --- 2. Build the SQL Query based on Filters ---
-$sql_filter = "p.tanggal_masuk IS NOT NULL";
-$filename_suffix = ""; // To make the exported file name descriptive
-
-switch ($export_type) {
-    case 'harian':
+// --- Build SQL Query based on export type ---
+switch ($exportType) {
+    case 'per_hari':
         if (!empty($tanggal)) {
-            $sql_filter .= " AND DATE(p.tanggal_masuk) = '$tanggal'";
-            $filename_suffix = "_Harian_" . date('Ymd', strtotime($tanggal));
+            $whereClause .= "AND DATE(p.tanggal_masuk) = ? ";
+            $params[] = $tanggal;
+            $paramTypes .= "s";
+            $fileName .= "Harian_" . $tanggal;
         } else {
-            // Fallback or error if tanggal is not provided for daily export
-            // For now, let's just make it today's date
-            $sql_filter .= " AND DATE(p.tanggal_masuk) = CURDATE()";
-            $filename_suffix = "_Harian_" . date('Ymd');
+            die("Tanggal tidak boleh kosong untuk ekspor harian.");
         }
         break;
-    case 'bulanan':
+    case 'per_bulan':
         if (!empty($bulan) && !empty($tahun)) {
-            $sql_filter .= " AND MONTH(p.tanggal_masuk) = '$bulan' AND YEAR(p.tanggal_masuk) = '$tahun'";
-            $filename_suffix = "_Bulanan_" . $tahun . $bulan;
+            $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
+            $params[] = $bulan;
+            $params[] = $tahun;
+            $paramTypes .= "ss";
+            $fileName .= "Bulanan_" . $bulan . "_" . $tahun;
         } else {
-             // Fallback to current month/year if not provided
-            $sql_filter .= " AND MONTH(p.tanggal_masuk) = MONTH(CURDATE()) AND YEAR(p.tanggal_masuk) = YEAR(CURDATE())";
-            $filename_suffix = "_Bulanan_" . date('Ym');
+            die("Bulan dan Tahun tidak boleh kosong untuk ekspor bulanan.");
         }
         break;
-    case 'tahunan':
-        if (!empty($tahun)) {
-            $sql_filter .= " AND YEAR(p.tanggal_masuk) = '$tahun'";
-            $filename_suffix = "_Tahunan_" . $tahun;
+    case 'per_siswa':
+        if (!empty($idSiswa)) {
+            $whereClause .= "AND s.id = ? ";
+            $params[] = $idSiswa;
+            $paramTypes .= "i";
+
+            // Optional: Filter by month/year for specific student's attendance
+            if (!empty($bulan) && !empty($tahun)) {
+                $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
+                $params[] = $bulan;
+                $params[] = $tahun;
+                $paramTypes .= "ss";
+                $fileName .= "Siswa_" . $idSiswa . "_" . $bulan . "_" . $tahun;
+            } else {
+                 $fileName .= "Siswa_" . $idSiswa . "_Semua";
+            }
         } else {
-            // Fallback to current year if not provided
-            $sql_filter .= " AND YEAR(p.tanggal_masuk) = YEAR(CURDATE())";
-            $filename_suffix = "_Tahunan_" . date('Y');
+            die("Siswa tidak boleh kosong untuk ekspor per siswa.");
         }
+        break;
+    case 'per_tahun':
+        if (!empty($tahun)) {
+            $whereClause .= "AND YEAR(p.tanggal_masuk) = ? ";
+            $params[] = $tahun;
+            $paramTypes .= "s";
+            $fileName .= "Tahunan_" . $tahun;
+        } else {
+            die("Tahun tidak boleh kosong untuk ekspor tahunan.");
+        }
+        break;
+    case 'semua':
+        $fileName .= "Semua_Data";
         break;
     default:
-        // No specific export type selected, maybe export all data or redirect with error
-        $filename_suffix = "_Semua_Data";
-        break;
+        die("Tipe ekspor tidak valid.");
 }
 
-if ($kelas_filter != 'all') {
-    $sql_filter .= " AND s.kelas = '$kelas_filter'";
-    $filename_suffix .= "_" . $kelas_filter;
+// Add Class Filter if not 'all' and not 'per_siswa' (per_siswa handles student ID directly)
+if ($kelasFilter != 'all' && $exportType !== 'per_siswa') {
+    $whereClause .= "AND s.kelas = ? ";
+    $params[] = $kelasFilter;
+    $paramTypes .= "s";
+    $fileName .= "_Kelas_" . $kelasFilter;
 }
 
-$query = "
+
+$sql = "
     SELECT
-        s.nis,
-        s.nama,
-        s.kelas,
-        p.tanggal_masuk,
-        p.jam_masuk,
-        p.nama_lokasi,
-        p.foto_masuk,
-        o.jam_keluar,
-        o.foto_keluar
+        s.nis, s.nama, s.kelas,
+        p.tanggal_masuk, p.jam_masuk, p.foto_masuk, p.nama_lokasi,
+        o.jam_keluar, o.foto_keluar
     FROM siswa s
     LEFT JOIN presensi p ON s.id = p.id_siswa
     LEFT JOIN presensi_out o ON s.id = o.id_siswa AND p.tanggal_masuk = o.tanggal_keluar
-    WHERE $sql_filter
-    ORDER BY p.tanggal_masuk DESC, s.kelas ASC, s.nama ASC
+    " . $whereClause . "
+    ORDER BY s.kelas ASC, s.nama ASC, p.tanggal_masuk ASC, p.jam_masuk ASC
 ";
 
-$result = mysqli_query($conection, $query);
+// Prepare and execute the statement
+$stmt = mysqli_prepare($conection, $sql);
 
-if (!$result) {
-    die("Query Error: " . mysqli_error($conection));
+if ($stmt === false) {
+    die("Prepare failed: " . htmlspecialchars(mysqli_error($conection)));
 }
 
-// --- 3. Create Excel Spreadsheet using PhpSpreadsheet ---
+if (!empty($params)) {
+    mysqli_stmt_bind_param($stmt, $paramTypes, ...$params);
+}
+
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+if (!$result) {
+    die("Query execution error: " . mysqli_error($conection));
+}
+
+// --- Create new Spreadsheet object ---
 $spreadsheet = new Spreadsheet();
 $sheet = $spreadsheet->getActiveSheet();
 $sheet->setTitle('Data Presensi Siswa');
 
-// Set headers
-$headers = ['No', 'NIS', 'Nama', 'Kelas', 'Tanggal Masuk', 'Jam Masuk', 'Lokasi Masuk', 'Jam Keluar', 'Status Presensi'];
+// --- Set Header Row ---
+$headers = [
+    'No', 'NIS', 'Nama', 'Kelas', 'Tanggal', 'Jam Masuk', 'Lokasi Masuk',
+    'Foto Masuk (Link)', 'Jam Keluar', 'Foto Keluar (Link)'
+];
 $sheet->fromArray($headers, NULL, 'A1');
 
-// Style headers
-$headerStyle = [
-    'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF428BCA']], // Blue color
-    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
-];
-$sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->applyFromArray($headerStyle);
-
-// Populate data
-$rowNum = 2;
-$no = 1;
+// --- Populate Data ---
+$rowNum = 2; // Start data from row 2
 while ($row = mysqli_fetch_assoc($result)) {
-    $status_presensi = "Belum Keluar";
-    if (!empty($row['jam_keluar'])) {
-        // Calculate attendance duration (optional)
-        $jam_masuk_ts = strtotime($row['jam_masuk']);
-        $jam_keluar_ts = strtotime($row['jam_keluar']);
-        $durasi_detik = $jam_keluar_ts - $jam_masuk_ts;
-        $durasi_jam = floor($durasi_detik / 3600);
-        $durasi_menit = floor(($durasi_detik % 3600) / 60);
-        $status_presensi = "Pulang (" . $durasi_jam . "j " . $durasi_menit . "m)";
-    }
-
-    $sheet->setCellValue('A' . $rowNum, $no++);
-    $sheet->setCellValue('B' . $rowNum, $row['nis']);
-    $sheet->setCellValue('C' . $rowNum, $row['nama']);
-    $sheet->setCellValue('D' . $rowNum, $row['kelas']);
-    $sheet->setCellValue('E' . $rowNum, $row['tanggal_masuk']);
-    $sheet->setCellValue('F' . $rowNum, $row['jam_masuk']);
-    $sheet->setCellValue('G' . $rowNum, $row['nama_lokasi']);
-    $sheet->setCellValue('H' . $rowNum, $row['jam_keluar'] ?? '-');
-    $sheet->setCellValue('I' . $rowNum, $status_presensi); // Add status
-
-    // Optional: Add photo links if needed, but direct images in Excel are complex
-    // $sheet->setCellValue('J' . $rowNum, !empty($row['foto_masuk']) ? 'Link Foto Masuk' : '');
-    // $sheet->setCellValue('K' . $rowNum, !empty($row['foto_keluar']) ? 'Link Foto Keluar' : '');
-
+    $data = [
+        ($rowNum - 1), // No
+        $row['nis'],
+        $row['nama'],
+        $row['kelas'] ?? '-',
+        $row['tanggal_masuk'],
+        $row['jam_masuk'],
+        $row['nama_lokasi'] ?? '-',
+        !empty($row['foto_masuk']) ? '../../siswa/presensi/foto/' . $row['foto_masuk'] : 'Tidak Ada',
+        $row['jam_keluar'] ?? '-',
+        !empty($row['foto_keluar']) ? '../../siswa/presensi/foto/' . $row['foto_keluar'] : 'Tidak Ada'
+    ];
+    $sheet->fromArray($data, NULL, 'A' . $rowNum);
     $rowNum++;
 }
 
-// Auto-size columns for better readability
-foreach (range('A', $sheet->getHighestColumn()) as $columnID) {
-    $sheet->getColumnDimension($columnID)->setAutoSize(true);
+// --- Styling ---
+// Header row styling
+$sheet->getStyle('A1:J1')->applyFromArray([
+    'font' => [
+        'bold' => true,
+        'color' => ['argb' => 'FFFFFFFF'],
+    ],
+    'fill' => [
+        'fillType' => Fill::FILL_SOLID,
+        'color' => ['argb' => 'FF4285F4'], // Google Blue
+    ],
+    'alignment' => [
+        'horizontal' => Alignment::HORIZONTAL_CENTER,
+    ],
+    'borders' => [
+        'allBorders' => [
+            'borderStyle' => Border::BORDER_THIN,
+            'color' => ['argb' => 'FF000000'],
+        ],
+    ],
+]);
+
+// Apply border to all data cells
+$sheet->getStyle('A1:J' . ($rowNum - 1))->applyFromArray([
+    'borders' => [
+        'allBorders' => [
+            'borderStyle' => Border::BORDER_THIN,
+            'color' => ['argb' => 'FF000000'],
+        ],
+    ],
+]);
+
+// Auto-size columns
+foreach (range('A', $sheet->getHighestDataColumn()) as $col) {
+    $sheet->getColumnDimension($col)->setAutoSize(true);
 }
 
-// --- 4. Set Headers for Download and Output Excel File ---
-$filename = "Rekap_Presensi_Siswa" . $filename_suffix . ".xlsx";
+// --- Output to Browser ---
+$writer = new Xlsx($spreadsheet);
+$fileName .= "_" . date('Ymd_His') . ".xlsx";
 
 header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header('Content-Disposition: attachment;filename="' . $filename . '"');
+header('Content-Disposition: attachment;filename="' . $fileName . '"');
 header('Cache-Control: max-age=0');
-
-$writer = new Xlsx($spreadsheet);
 $writer->save('php://output');
 
+mysqli_stmt_close($stmt);
+mysqli_close($conection);
 exit;
 ?>

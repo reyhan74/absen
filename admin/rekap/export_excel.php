@@ -13,13 +13,23 @@ if (!isset($_SESSION['login'])) {
 include('../layout/header.php'); // Ensure this path is correct
 require_once('../../config.php'); // Ensure this path is correct
 
-// Fetch list of classes from the database for the class filter dropdown
+// Get list of classes from the database for the dropdown
 $query_kelas = "SELECT DISTINCT kelas FROM siswa WHERE kelas IS NOT NULL AND kelas != '' ORDER BY kelas ASC";
 $result_kelas = mysqli_query($conection, $query_kelas);
 $daftar_kelas = [];
 if ($result_kelas) {
     while ($row = mysqli_fetch_assoc($result_kelas)) {
         $daftar_kelas[] = $row['kelas'];
+    }
+}
+
+// Get list of students (NIS and Nama) for the student dropdown
+$query_siswa = "SELECT id, nis, nama FROM siswa ORDER BY nama ASC";
+$result_siswa = mysqli_query($conection, $query_siswa);
+$daftar_siswa = [];
+if ($result_siswa) {
+    while ($row = mysqli_fetch_assoc($result_siswa)) {
+        $daftar_siswa[] = $row;
     }
 }
 ?>
@@ -33,9 +43,11 @@ if ($result_kelas) {
                 <label for="export_type" class="form-label">Pilih Tipe Ekspor:</label>
                 <select class="form-select" id="export_type" name="export_type" required>
                     <option value="">-- Pilih Tipe Ekspor --</option>
-                    <option value="harian">Harian</option>
-                    <option value="bulanan">Bulanan</option>
-                    <option value="tahunan">Tahunan</option>
+                    <option value="per_hari">Per Hari</option>
+                    <option value="per_bulan">Per Bulan</option>
+                    <option value="per_siswa">Per Siswa</option>
+                    <option value="per_tahun">Per Tahun</option>
+                    <option value="semua">Semua Data</option>
                 </select>
             </div>
 
@@ -74,7 +86,19 @@ if ($result_kelas) {
                 </select>
             </div>
 
-            <div class="mb-3">
+            <div id="siswa_section" class="mb-3" style="display: none;">
+                <label for="id_siswa" class="form-label">Pilih Siswa:</label>
+                <select class="form-select" id="id_siswa" name="id_siswa">
+                    <option value="">-- Pilih Siswa --</option>
+                    <?php foreach ($daftar_siswa as $siswa): ?>
+                        <option value="<?php echo htmlspecialchars($siswa['id']); ?>">
+                            <?php echo htmlspecialchars($siswa['nis'] . ' - ' . $siswa['nama']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div id="kelas_filter_section" class="mb-3">
                 <label for="kelas_filter" class="form-label">Filter Berdasarkan Kelas:</label>
                 <select class="form-select" id="kelas_filter" name="kelas_filter">
                     <option value="all">Semua Kelas</option>
@@ -96,33 +120,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const tanggalSection = document.getElementById('tanggal_section');
     const bulanSection = document.getElementById('bulan_section');
     const tahunSection = document.getElementById('tahun_section');
+    const siswaSection = document.getElementById('siswa_section');
+    const kelasFilterSection = document.getElementById('kelas_filter_section');
 
     function toggleSections() {
         const selectedType = exportTypeSelect.value;
 
-        // Hide all date/time related sections first
+        // Hide all sections initially
         tanggalSection.style.display = 'none';
         bulanSection.style.display = 'none';
         tahunSection.style.display = 'none';
+        siswaSection.style.display = 'none';
+        kelasFilterSection.style.display = 'block'; // Default to visible for most exports
 
-        // Show sections based on selected export type
-        if (selectedType === 'harian') {
-            tanggalSection.style.display = 'block';
-            // For daily export, month and year are implicitly part of the date picker.
-            // If you still want to allow selecting month/year for context, you could show them,
-            // but typically a single date picker is enough for "harian".
-            // If you want to force selection, remove the default date value and make it required.
-        } else if (selectedType === 'bulanan') {
-            bulanSection.style.display = 'block';
-            tahunSection.style.display = 'block';
-        } else if (selectedType === 'tahunan') {
-            tahunSection.style.display = 'block';
+        // Reset values when hidden
+        document.getElementById('tanggal').value = '';
+        document.getElementById('bulan').value = '<?php echo date('m'); ?>';
+        document.getElementById('tahun').value = '<?php echo date('Y'); ?>';
+        document.getElementById('id_siswa').value = '';
+        document.getElementById('kelas_filter').value = 'all';
+
+        switch (selectedType) {
+            case 'per_hari':
+                tanggalSection.style.display = 'block';
+                // kelasFilterSection.style.display = 'block'; // already default
+                break;
+            case 'per_bulan':
+                bulanSection.style.display = 'block';
+                tahunSection.style.display = 'block';
+                // kelasFilterSection.style.display = 'block'; // already default
+                break;
+            case 'per_siswa':
+                siswaSection.style.display = 'block';
+                bulanSection.style.display = 'block'; // Often useful to filter student attendance by month
+                tahunSection.style.display = 'block';
+                kelasFilterSection.style.display = 'none'; // Class filter not needed when selecting specific student
+                break;
+            case 'per_tahun':
+                tahunSection.style.display = 'block';
+                // kelasFilterSection.style.display = 'block'; // already default
+                break;
+            case 'semua':
+                // kelasFilterSection.style.display = 'block'; // already default
+                break;
         }
     }
 
     exportTypeSelect.addEventListener('change', toggleSections);
 
-    // Call on page load to set initial display based on default selection (or no selection)
+    // Call on page load to set initial visibility based on default selected option or no option
     toggleSections();
 });
 </script>
