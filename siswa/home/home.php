@@ -52,10 +52,10 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
           <div class="card-header text-center">
             <h5>Pilih Lokasi & Presensi</h5>
           </div>
-          <div class="card-body">
+          <div class="card-body text-center">
 
             <!-- Pilih Lokasi -->
-            <form id="lokasiForm" class="mb-4 text-center">
+            <form id="lokasiForm" class="mb-4">
               <label for="lokasiSelect" class="form-label fw-bold">Pilih Lokasi</label>
               <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
                 <option value="">-- Pilih Lokasi --</option>
@@ -67,9 +67,9 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
               </select>
             </form>
 
-            <div class="row">
-              <!-- Presensi Masuk -->
-              <div class="col-md-6 border-end" id="masukSection" style="display: none;">
+            <!-- Presensi Section -->
+            <div class="row justify-content-center">
+              <div class="col-md-6" id="masukSection" style="display: none;">
                 <div class="text-center">
                   <h6>Presensi Masuk</h6>
                   <div class="parent_date mb-1">
@@ -96,7 +96,6 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                 </div>
               </div>
 
-              <!-- Presensi Keluar -->
               <div class="col-md-6" id="keluarSection" style="display: none;">
                 <div class="text-center">
                   <h6>Presensi Keluar</h6>
