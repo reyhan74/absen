@@ -13,9 +13,7 @@ $lokasi_result = mysqli_query($conection, "SELECT * FROM lokasi_presensi");
 while ($row = mysqli_fetch_assoc($lokasi_result)) {
     $lokasi_presensi[] = $row;
 }
-?>
 
-<?php
 if (isset($_GET['pesan'])) {
     if ($_GET['pesan'] == "terimakasih_sudah_login") {
         $_SESSION['gagal'] = 'Terimakasih sudah login';
@@ -23,260 +21,157 @@ if (isset($_GET['pesan'])) {
         $_SESSION['gagal'] = 'Akses ke halaman ini ditolak';
     }
 }
-?>
 
-<?php if (isset($_SESSION['gagal'])): ?>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: "<?= htmlspecialchars($_SESSION['gagal'], ENT_QUOTES); ?>",
+if (isset($_SESSION['gagal'])) {
+    echo "<script>
+        document.addEventListener(\"DOMContentLoaded\", function () {
+            Swal.fire({ icon: 'error', title: 'Oops...', text: '" . htmlspecialchars($_SESSION['gagal'], ENT_QUOTES) . "' });
         });
-    });
-</script>
-<?php unset($_SESSION['gagal']); endif; ?>
+    </script>";
+    unset($_SESSION['gagal']);
+}
+?>
 
 <style>
   .parent_date {
-    display: grid;
-    grid-template-columns: auto auto auto auto auto;
-    font-size: 20px;
-    text-align: center;
+    display: flex;
     justify-content: center;
+    gap: 5px;
+    font-size: 20px;
   }
-
   .parent_clock {
     display: flex;
     justify-content: center;
+    gap: 10px;
     font-size: 24px;
     font-weight: bold;
-    gap: 10px;
   }
 </style>
 
 <div class="page-body">
   <div class="container-xl">
     <div class="row justify-content-center mt-4">
-  <div class="col-md-10">
-    <div class="card">
-      <div class="card-header text-center">
-        <h5>Pilih Lokasi & Presensi</h5>
-      </div>
-      <div class="card-body">
-
-        <!-- Pilih Lokasi -->
-        <form id="lokasiForm" class="mb-4 text-center">
-          <label for="lokasiSelect" class="form-label fw-bold">Pilih Lokasi</label>
-          <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
-            <option value="">-- Pilih Lokasi --</option>
-            <?php foreach ($lokasi_presensi as $lokasi): ?>
-              <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
-                <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-        </form>
-
-        <div class="row">
-          <!-- Presensi Masuk -->
-          <div class="col-md-6 border-end">
-            <div class="text-center">
-              <h6>Presensi Masuk</h6>
-              <div class="parent_date mb-1">
-                <div id="tanggal_masuk"></div><div class="ms-1"></div>
-                <div id="bulan_masuk"></div><div class="ms-1"></div>
-                <div id="tahun_masuk"></div>
-              </div>
-              <div class="parent_clock mb-2">
-                <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
-              </div>
-              <form action="../presensi/presensi_masuk.php" method="POST">
-                <input type="hidden" name="nama_lokasi">
-                <input type="hidden" name="latitude_kantor">
-                <input type="hidden" name="longitude_kantor">
-                <input type="hidden" name="radius">
-                <input type="hidden" name="zona_waktu">
-                <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
-                <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
-                <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
-                <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
-                <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
-              </form>
-            </div>
+      <div class="col-md-10">
+        <div class="card">
+          <div class="card-header text-center">
+            <h5>Pilih Lokasi & Presensi</h5>
           </div>
+          <div class="card-body">
 
-          <!-- Presensi Keluar -->
-          <div class="col-md-6">
-            <div class="text-center">
-              <h6>Presensi Keluar</h6>
-              <div class="parent_date mb-1">
-                <div id="tanggal_keluar"></div><div class="ms-1"></div>
-                <div id="bulan_keluar"></div><div class="ms-1"></div>
-                <div id="tahun_keluar"></div>
+            <form id="lokasiForm" class="mb-4 text-center">
+              <label for="lokasiSelect" class="form-label fw-bold">Pilih Lokasi</label>
+              <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
+                <option value="">-- Pilih Lokasi --</option>
+                <?php foreach ($lokasi_presensi as $lokasi): ?>
+                  <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
+                    <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </form>
+
+            <div class="row">
+              <!-- Presensi Masuk -->
+              <div class="col-md-6 border-end">
+                <div class="text-center">
+                  <h6>Presensi Masuk</h6>
+                  <div class="parent_date mb-1">
+                    <div id="tanggal_masuk"></div><div id="bulan_masuk"></div><div id="tahun_masuk"></div>
+                  </div>
+                  <div class="parent_clock mb-2">
+                    <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
+                  </div>
+                  <form action="../presensi/presensi_masuk.php" method="POST" class="form-masuk d-none">
+                    <input type="hidden" name="nama_lokasi">
+                    <input type="hidden" name="latitude_kantor">
+                    <input type="hidden" name="longitude_kantor">
+                    <input type="hidden" name="radius">
+                    <input type="hidden" name="zona_waktu">
+                    <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
+                    <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
+                    <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
+                    <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
+                    <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
+                  </form>
+                </div>
               </div>
-              <div class="parent_clock mb-2">
-                <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
+
+              <!-- Presensi Keluar -->
+              <div class="col-md-6">
+                <div class="text-center">
+                  <h6>Presensi Keluar</h6>
+                  <div class="parent_date mb-1">
+                    <div id="tanggal_keluar"></div><div id="bulan_keluar"></div><div id="tahun_keluar"></div>
+                  </div>
+                  <div class="parent_clock mb-2">
+                    <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
+                  </div>
+                  <form action="../presensi/presensi_keluar.php" method="POST" class="form-keluar d-none">
+                    <input type="hidden" name="nama_lokasi">
+                    <input type="hidden" name="latitude_kantor">
+                    <input type="hidden" name="longitude_kantor">
+                    <input type="hidden" name="radius">
+                    <input type="hidden" name="zona_waktu">
+                    <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_keluar">
+                    <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
+                    <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
+                    <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
+                    <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
+                  </form>
+                </div>
               </div>
-              <form action="../presensi/presensi_keluar.php" method="POST">
-                <input type="hidden" name="nama_lokasi">
-                <input type="hidden" name="latitude_kantor">
-                <input type="hidden" name="longitude_kantor">
-                <input type="hidden" name="radius">
-                <input type="hidden" name="zona_waktu">
-                <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_keluar">
-                <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
-                <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
-                <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
-                <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
-              </form>
             </div>
+            <div id="status" class="mt-3 text-center text-muted fw-semibold"></div>
+
           </div>
         </div>
-
-        <!-- Status Lokasi -->
-        <div id="status" class="mt-3 text-center text-muted fw-semibold"></div>
-
       </div>
     </div>
   </div>
 </div>
 
-<div id="status" style="text-align: center; margin-top: 20px;"></div>
-
 <script>
-  const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-  function updateTime() {
-    const waktu = new Date();
-    const tanggal = waktu.getDate();
-    const bulan = namaBulan[waktu.getMonth()];
-    const tahun = waktu.getFullYear();
-    const jam = waktu.getHours().toString().padStart(2, '0');
-    const menit = waktu.getMinutes().toString().padStart(2, '0');
-    const detik = waktu.getSeconds().toString().padStart(2, '0');
+function updateTime() {
+  const now = new Date();
+  const tanggal = now.getDate();
+  const bulan = namaBulan[now.getMonth()];
+  const tahun = now.getFullYear();
+  const jam = now.getHours().toString().padStart(2, '0');
+  const menit = now.getMinutes().toString().padStart(2, '0');
+  const detik = now.getSeconds().toString().padStart(2, '0');
 
-    const setTime = (prefix) => {
-      document.getElementById(`tanggal_${prefix}`).innerHTML = tanggal;
-      document.getElementById(`bulan_${prefix}`).innerHTML = bulan;
-      document.getElementById(`tahun_${prefix}`).innerHTML = tahun;
-      document.getElementById(`jam_${prefix}`).innerHTML = jam;
-      document.getElementById(`menit_${prefix}`).innerHTML = menit;
-      document.getElementById(`detik_${prefix}`).innerHTML = detik;
-    };
+  const setTime = prefix => {
+    document.getElementById(`tanggal_${prefix}`).innerText = tanggal;
+    document.getElementById(`bulan_${prefix}`).innerText = bulan;
+    document.getElementById(`tahun_${prefix}`).innerText = tahun;
+    document.getElementById(`jam_${prefix}`).innerText = jam;
+    document.getElementById(`menit_${prefix}`).innerText = menit;
+    document.getElementById(`detik_${prefix}`).innerText = detik;
+  };
 
-    setTime("masuk");
-    setTime("keluar");
+  setTime("masuk");
+  setTime("keluar");
+
+  const jamSekarang = parseInt(jam);
+  const formMasuk = document.querySelector(".form-masuk");
+  const formKeluar = document.querySelector(".form-keluar");
+
+  if (jamSekarang >= 6 && jamSekarang < 12) {
+    formMasuk.classList.remove("d-none");
+    formKeluar.classList.add("d-none");
+  } else if (jamSekarang >= 12 && jamSekarang < 18) {
+    formMasuk.classList.add("d-none");
+    formKeluar.classList.remove("d-none");
+  } else {
+    formMasuk.classList.add("d-none");
+    formKeluar.classList.add("d-none");
   }
+}
 
-  setInterval(updateTime, 1000);
-  updateTime();
-
-  function deg2rad(deg) {
-    return deg * (Math.PI / 180);
-  }
-
-  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c * 1000;
-  }
-
-  function getLocation(latKantor, lonKantor, radius) {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const latPegawai = position.coords.latitude;
-        const lonPegawai = position.coords.longitude;
-        const jarak = getDistanceFromLatLonInKm(latPegawai, lonPegawai, parseFloat(latKantor), parseFloat(lonKantor));
-
-        if (jarak > radius) {
-          document.getElementById("status").innerText = `Diluar radius! Jarak: ${Math.round(jarak)} meter`;
-          Swal.fire({
-            icon: "error",
-            title: "Diluar Radius!",
-            text: `Jarak Anda ${Math.round(jarak)} meter di luar jangkauan lokasi.`,
-          });
-          document.querySelectorAll("button[name='tombol_masuk'], button[name='tombol_keluar']").forEach(btn => btn.disabled = true);
-        } else {
-          document.getElementById("latitude_pegawai_masuk").value = latPegawai;
-          document.getElementById("longitude_pegawai_masuk").value = lonPegawai;
-          document.getElementById("latitude_pegawai_keluar").value = latPegawai;
-          document.getElementById("longitude_pegawai_keluar").value = lonPegawai;
-
-          document.getElementById("status").innerText = "Lokasi berhasil diambil!";
-          document.querySelectorAll("button[name='tombol_masuk'], button[name='tombol_keluar']").forEach(btn => btn.disabled = false);
-        }
-      }, showError);
-    } else {
-      document.getElementById("status").innerText = "Browser Anda tidak mendukung Geolocation.";
-    }
-  }
-
-  function showError(error) {
-    let message = "Terjadi kesalahan saat mengambil lokasi.";
-    switch (error.code) {
-      case error.PERMISSION_DENIED: message = "Anda menolak permintaan lokasi."; break;
-      case error.POSITION_UNAVAILABLE: message = "Informasi lokasi tidak tersedia."; break;
-      case error.TIMEOUT: message = "Permintaan lokasi melebihi batas waktu."; break;
-    }
-    document.getElementById("status").innerText = message;
-    Swal.fire({ icon: "error", title: "Lokasi Error", text: message });
-  }
-
-  // Saat lokasi dipilih
-  document.getElementById("lokasiSelect").addEventListener("change", function () {
-    const lokasi = this.value;
-    if (!lokasi) return;
-
-    fetch("get_lokasi.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "lokasi=" + encodeURIComponent(lokasi),
-    })
-    .then(res => res.json())
-    .then(data => {
-      console.log("RESPON LOKASI:", data);
-
-      if (data && !data.error) {
-        document.querySelectorAll("input[name='nama_lokasi']").forEach(el => el.value = data.nama_lokasi);
-        document.querySelectorAll("input[name='latitude_kantor']").forEach(el => el.value = data.latitut);
-        document.querySelectorAll("input[name='longitude_kantor']").forEach(el => el.value = data.longitude);
-        document.querySelectorAll("input[name='radius']").forEach(el => el.value = data.radius);
-        document.querySelectorAll("input[name='zona_waktu']").forEach(el => el.value = data.zona_waktu);
-
-        // Konversi dan validasi sebelum dipakai
-        const lat = parseFloat(data.latitut);
-        const lon = parseFloat(data.longitude);
-        const rad = parseFloat(data.radius);
-        if (!isNaN(lat) && !isNaN(lon) && !isNaN(rad)) {
-          getLocation(lat, lon, rad);
-        } else {
-          Swal.fire("Data Tidak Valid", "Koordinat atau radius bermasalah.", "error");
-        }
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Ambil Lokasi",
-          text: data.error || "Data lokasi tidak ditemukan.",
-        });
-      }
-    })
-    .catch(err => {
-      console.error("Fetch Gagal:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Kesalahan",
-        text: "Gagal menghubungi server. Coba lagi nanti.",
-      });
-    });
-  });
+setInterval(updateTime, 1000);
+updateTime();
 </script>
-
 
 <?php include('../layout/foother.php'); ?>
