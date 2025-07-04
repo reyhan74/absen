@@ -80,7 +80,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                   <div class="parent_clock mb-2">
                     <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
                   </div>
-                  <form action="../presensi/presensi_masuk.php" method="POST">
+                  <form id="formMasuk" action="../presensi/presensi_masuk.php" method="POST">
                     <input type="hidden" name="nama_lokasi">
                     <input type="hidden" name="latitude_kantor">
                     <input type="hidden" name="longitude_kantor">
@@ -91,7 +91,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
                     <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
                     <input type="hidden" name="status_masuk" id="status_masuk" value="">
-                    <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
+                    <button type="submit" name="tombol_masuk" id="btnMasuk" class="btn btn-primary">Masuk</button>
                   </form>
                 </div>
               </div>
@@ -108,7 +108,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                   <div class="parent_clock mb-2">
                     <div id="jam_keluar"></div>:<div id="menit_keluar"></div>:<div id="detik_keluar"></div>
                   </div>
-                  <form action="../presensi/presensi_keluar.php" method="POST">
+                  <form id="formKeluar" action="../presensi/presensi_keluar.php" method="POST">
                     <input type="hidden" name="nama_lokasi">
                     <input type="hidden" name="latitude_kantor">
                     <input type="hidden" name="longitude_kantor">
@@ -118,7 +118,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_keluar">
                     <input type="hidden" name="tanggal_keluar" value="<?= date('Y-m-d') ?>">
                     <input type="hidden" name="jam_keluar" value="<?= date('H:i:s') ?>">
-                    <button type="submit" name="tombol_keluar" class="btn btn-danger" disabled>Keluar</button>
+                    <button type="submit" name="tombol_keluar" id="btnKeluar" class="btn btn-danger">Keluar</button>
                   </form>
                 </div>
               </div>
@@ -139,6 +139,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
 
   let jamMasukDB = null;
   let jamPulangDB = null;
+  let lokasiDipilih = null;
 
   function updateTime() {
     const waktu = new Date();
@@ -165,9 +166,13 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
         document.getElementById("masukSection").style.display = "block";
         document.getElementById("keluarSection").style.display = "none";
         document.getElementById("status_masuk").value = (jamMenit > jamMasukDB) ? "Terlambat" : "Tepat Waktu";
+        document.getElementById("btnMasuk").disabled = false;
+        document.getElementById("btnKeluar").disabled = true;
       } else if (jamMenit >= jamPulangDB) {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "block";
+        document.getElementById("btnMasuk").disabled = true;
+        document.getElementById("btnKeluar").disabled = false;
       } else {
         document.getElementById("masukSection").style.display = "none";
         document.getElementById("keluarSection").style.display = "none";
@@ -176,12 +181,12 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
   }
 
   setInterval(updateTime, 1000);
-  updateTime();
 
   document.getElementById("lokasiSelect").addEventListener("change", function () {
     const selected = JSON.parse(this.value);
     jamMasukDB = selected.jam_masuk?.substring(0,5);
     jamPulangDB = selected.jam_pulang?.substring(0,5);
+    lokasiDipilih = selected;
     updateTime();
   });
 </script>
