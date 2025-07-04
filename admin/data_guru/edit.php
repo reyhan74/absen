@@ -70,10 +70,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if (!empty($password_baru)) {
             $hashed_password = password_hash($password_baru, PASSWORD_DEFAULT);
             $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, foto=?, password=? WHERE id=?");
-            $stmt->bind_param("ssssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $hashed_password, $id);
+            $stmt->bind_param("ssssssssss", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $hashed_password, $id);
         } else {
             $stmt = $conection->prepare("UPDATE guru SET username=?, nama=?, jenis_kelamin=?, alamat=?, no_handphone=?, status=?, role=?, foto=? WHERE id=?");
-            $stmt->bind_param("sssssssssi", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $id);
+            $stmt->bind_param("sssssssss", $username, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_path, $id);
         }
 
         if ($stmt->execute()) {
