@@ -233,7 +233,7 @@ if (isset($_GET['pesan'])) {
     const lokasi = this.value;
     if (!lokasi) return;
 
-    fetch("../presensi/get_lokasi.php", {
+    fetch("get_lokasi.php", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: "lokasi=" + encodeURIComponent(lokasi),
