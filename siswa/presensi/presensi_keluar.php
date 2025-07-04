@@ -51,18 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     }
 }
 
-// Tampilkan halaman kamera jika tombol keluar ditekan dan jarak valid
 include('../layout/header.php');
 
 if (isset($_POST['tombol_keluar'])) {
-   $latitude_pegawai = floatval($_POST['latitude_pegawai']);
-$longitude_pegawai = floatval($_POST['longitude_pegawai']);
-$latitude_kantor = floatval($_POST['latitude_kantor']);
-$longitude_kantor = floatval($_POST['longitude_kantor']);
-$radius = floatval($_POST['radius']);
+    $latitude_pegawai = floatval($_POST['latitude_pegawai']);
+    $longitude_pegawai = floatval($_POST['longitude_pegawai']);
+    $latitude_kantor = floatval($_POST['latitude_kantor']);
+    $longitude_kantor = floatval($_POST['longitude_kantor']);
+    $radius = floatval($_POST['radius']);
 
-    // Hitung jarak antara lokasi pengguna dan kantor
-    $theta = floatval($longitude_pegawai) - floatval($longitude_kantor);
+    $theta = $longitude_pegawai - $longitude_kantor;
     $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
              cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($theta));
     $jarak = acos($jarak);
@@ -85,8 +83,12 @@ $radius = floatval($_POST['radius']);
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <iframe src="https://www.google.com/maps?q=<?= $latitude_pegawai ?>,<?= $longitude_pegawai ?>&hl=es;z=14&output=embed"
+                        <?php if ($latitude_pegawai != 0 && $longitude_pegawai != 0): ?>
+                        <iframe src="https://maps.google.com/maps?q=<?= $latitude_pegawai ?>,<?= $longitude_pegawai ?>&hl=es&z=14&output=embed"
                                 width="100%" height="400" style="border:0;" allowfullscreen></iframe>
+                        <?php else: ?>
+                        <p class="text-danger">Koordinat tidak tersedia.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -134,7 +136,6 @@ $radius = floatval($_POST['radius']);
         });
     });
 </script>
-
 <?php } ?>
 
 <?php if (isset($_SESSION['gagal'])): ?>
