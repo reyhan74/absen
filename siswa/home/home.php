@@ -60,9 +60,11 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
               <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
                 <option value="">-- Pilih Lokasi --</option>
                 <?php foreach ($lokasi_presensi as $lokasi): ?>
+                  <?php if (!empty($lokasi['jam_masuk']) && !empty($lokasi['jam_pulang'])): ?>
                   <option value='<?= json_encode($lokasi) ?>'>
                     <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
                   </option>
+                  <?php endif; ?>
                 <?php endforeach; ?>
               </select>
             </form>
@@ -183,6 +185,14 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
 
   document.getElementById("lokasiSelect").addEventListener("change", function () {
     const selected = JSON.parse(this.value);
+    if (!selected || !selected.jam_masuk || !selected.jam_pulang) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Data Lokasi Tidak Lengkap',
+        text: 'Silakan pilih lokasi dengan jam masuk dan pulang yang valid.'
+      });
+      return;
+    }
     jamMasukDB = selected.jam_masuk?.substring(0,5);
     jamPulangDB = selected.jam_pulang?.substring(0,5);
     lokasiDipilih = selected;
