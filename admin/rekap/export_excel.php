@@ -10,11 +10,11 @@ if (!isset($_SESSION['login'])) {
     exit;
 }
 
-include('../layout/header.php'); // Pastikan path ini benar
-require_once('../../config.php'); // Pastikan path ini benar
+include('../layout/header.php'); // Ensure this path is correct
+require_once('../../config.php'); // Ensure this path is correct
 
-// Ambil daftar kelas dari database untuk dropdown pilihan
-$query_kelas = "SELECT DISTINCT kelas FROM siswa ORDER BY kelas ASC";
+// Fetch list of classes from the database for the class filter dropdown
+$query_kelas = "SELECT DISTINCT kelas FROM siswa WHERE kelas IS NOT NULL AND kelas != '' ORDER BY kelas ASC";
 $result_kelas = mysqli_query($conection, $query_kelas);
 $daftar_kelas = [];
 if ($result_kelas) {
@@ -47,7 +47,7 @@ if ($result_kelas) {
             <div id="bulan_section" class="mb-3" style="display: none;">
                 <label for="bulan" class="form-label">Pilih Bulan:</label>
                 <select class="form-select" id="bulan" name="bulan">
-                    <?php 
+                    <?php
                     $bulan_nama = [
                         '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
                         '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
@@ -64,7 +64,7 @@ if ($result_kelas) {
             <div id="tahun_section" class="mb-3" style="display: none;">
                 <label for="tahun" class="form-label">Pilih Tahun:</label>
                 <select class="form-select" id="tahun" name="tahun">
-                    <?php 
+                    <?php
                     $current_year = date('Y');
                     for ($y = $current_year - 5; $y <= $current_year + 1; $y++) {
                         $selected = ($current_year == $y) ? 'selected' : '';
@@ -96,19 +96,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const tanggalSection = document.getElementById('tanggal_section');
     const bulanSection = document.getElementById('bulan_section');
     const tahunSection = document.getElementById('tahun_section');
-    const kelasFilterSelect = document.getElementById('kelas_filter'); // New: Kelas filter
 
     function toggleSections() {
         const selectedType = exportTypeSelect.value;
 
+        // Hide all date/time related sections first
         tanggalSection.style.display = 'none';
         bulanSection.style.display = 'none';
         tahunSection.style.display = 'none';
 
+        // Show sections based on selected export type
         if (selectedType === 'harian') {
             tanggalSection.style.display = 'block';
-            bulanSection.style.display = 'block'; // Untuk tahun harian
-            tahunSection.style.display = 'block'; // Untuk tahun harian
+            // For daily export, month and year are implicitly part of the date picker.
+            // If you still want to allow selecting month/year for context, you could show them,
+            // but typically a single date picker is enough for "harian".
+            // If you want to force selection, remove the default date value and make it required.
         } else if (selectedType === 'bulanan') {
             bulanSection.style.display = 'block';
             tahunSection.style.display = 'block';
@@ -119,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     exportTypeSelect.addEventListener('change', toggleSections);
 
-    // Panggil saat halaman dimuat untuk mengatur tampilan awal
-    toggleSections(); 
+    // Call on page load to set initial display based on default selection (or no selection)
+    toggleSections();
 });
 </script>
 
