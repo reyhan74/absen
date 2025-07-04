@@ -96,7 +96,7 @@ require_once('../../config.php');
                                                 <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
                                             </svg>
                                         </span>
-                                        <span class="nav-link-title">Home</span>
+                                        <span class="nav-link-title">Beranda</span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -122,7 +122,7 @@ require_once('../../config.php');
                                                 <path d="M18 15l3 -3" />
                                             </svg>
                                         </span>
-                                        <span class="nav-link-title">Log Out</span>
+                                        <span class="nav-link-title">keluar</span>
                                     </a>
                                 </li>
                             </ul>
