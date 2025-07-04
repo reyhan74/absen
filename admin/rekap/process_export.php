@@ -21,11 +21,6 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 // --- Get export parameters ---
 $exportType = $_POST['export_type'] ?? '';
-$tanggal = $_POST['tanggal'] ?? '';
-$bulan = $_POST['bulan'] ?? '';
-$tahun = $_POST['tahun'] ?? '';
-$idSiswa = $_POST['id_siswa'] ?? '';
-$kelasFilter = $_POST['kelas_filter'] ?? 'all';
 
 $fileName = "Rekap_Presensi_";
 $whereClause = "WHERE p.tanggal_masuk IS NOT NULL ";
@@ -35,69 +30,105 @@ $paramTypes = "";
 // --- Build SQL Query based on export type ---
 switch ($exportType) {
     case 'per_hari':
-        if (!empty($tanggal)) {
-            $whereClause .= "AND DATE(p.tanggal_masuk) = ? ";
-            $params[] = $tanggal;
-            $paramTypes .= "s";
-            $fileName .= "Harian_" . $tanggal;
-        } else {
-            die("Tanggal tidak boleh kosong untuk ekspor harian.");
-        }
+        $tanggal = $_POST['tanggal'] ?? '';
+        if (empty($tanggal)) die("Tanggal tidak boleh kosong untuk ekspor harian.");
+        $whereClause .= "AND DATE(p.tanggal_masuk) = ? ";
+        $params[] = $tanggal;
+        $paramTypes .= "s";
+        $fileName .= "Harian_" . $tanggal;
         break;
-    case 'per_bulan':
-        if (!empty($bulan) && !empty($tahun)) {
-            $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
-            $params[] = $bulan;
-            $params[] = $tahun;
-            $paramTypes .= "ss";
-            $fileName .= "Bulanan_" . $bulan . "_" . $tahun;
-        } else {
-            die("Bulan dan Tahun tidak boleh kosong untuk ekspor bulanan.");
-        }
-        break;
-    case 'per_siswa':
-        if (!empty($idSiswa)) {
-            $whereClause .= "AND s.id = ? ";
-            $params[] = $idSiswa;
-            $paramTypes .= "i";
 
-            // Optional: Filter by month/year for specific student's attendance
-            if (!empty($bulan) && !empty($tahun)) {
-                $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
-                $params[] = $bulan;
-                $params[] = $tahun;
-                $paramTypes .= "ss";
-                $fileName .= "Siswa_" . $idSiswa . "_" . $bulan . "_" . $tahun;
-            } else {
-                 $fileName .= "Siswa_" . $idSiswa . "_Semua";
-            }
-        } else {
-            die("Siswa tidak boleh kosong untuk ekspor per siswa.");
-        }
+    case 'per_minggu':
+        $tanggal_minggu = $_POST['tanggal_minggu'] ?? '';
+        if (empty($tanggal_minggu)) die("Tanggal minggu tidak boleh kosong untuk ekspor mingguan.");
+        $whereClause .= "AND YEARWEEK(p.tanggal_masuk, 1) = YEARWEEK(STR_TO_DATE(?, '%Y-%m-%d'), 1) "; // Use STR_TO_DATE for robust comparison
+        $params[] = $tanggal_minggu;
+        $paramTypes .= "s";
+        $fileName .= "Mingguan_" . $tanggal_minggu;
         break;
+
+    case 'per_bulan':
+        $bulan = $_POST['bulan'] ?? '';
+        $tahun = $_POST['tahun'] ?? '';
+        if (empty($bulan) || empty($tahun)) die("Bulan dan Tahun tidak boleh kosong untuk ekspor bulanan.");
+        $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
+        $params[] = $bulan;
+        $params[] = $tahun;
+        $paramTypes .= "ss";
+        $fileName .= "Bulanan_" . $bulan . "_" . $tahun;
+        break;
+
     case 'per_tahun':
-        if (!empty($tahun)) {
+        $tahun = $_POST['tahun'] ?? '';
+        if (empty($tahun)) die("Tahun tidak boleh kosong untuk ekspor tahunan.");
+        $whereClause .= "AND YEAR(p.tanggal_masuk) = ? ";
+        $params[] = $tahun;
+        $paramTypes .= "s";
+        $fileName .= "Tahunan_" . $tahun;
+        break;
+
+    case 'per_siswa':
+        $idSiswa = $_POST['id_siswa'] ?? '';
+        $siswaPeriode = $_POST['siswa_periode'] ?? '';
+        if (empty($idSiswa)) die("Siswa tidak boleh kosong untuk ekspor per siswa.");
+
+        // Fetch student's name and class for filename
+        $stmt_siswa_info = mysqli_prepare($conection, "SELECT nis, nama, kelas FROM siswa WHERE id = ?");
+        mysqli_stmt_bind_param($stmt_siswa_info, "i", $idSiswa);
+        mysqli_stmt_execute($stmt_siswa_info);
+        $result_siswa_info = mysqli_stmt_get_result($stmt_siswa_info);
+        $siswa_info = mysqli_fetch_assoc($result_siswa_info);
+        $siswa_nama_file = str_replace(' ', '_', $siswa_info['nama'] ?? 'Siswa');
+        mysqli_stmt_close($stmt_siswa_info);
+
+        $whereClause .= "AND s.id = ? ";
+        $params[] = $idSiswa;
+        $paramTypes .= "i";
+        $fileName .= "Siswa_" . $siswa_nama_file;
+
+        if ($siswaPeriode == 'bulanan') {
+            $siswaBulan = $_POST['siswa_bulan'] ?? '';
+            $siswaTahun = $_POST['siswa_tahun'] ?? '';
+            if (empty($siswaBulan) || empty($siswaTahun)) die("Bulan dan Tahun siswa tidak boleh kosong untuk ekspor bulanan siswa.");
+            $whereClause .= "AND MONTH(p.tanggal_masuk) = ? AND YEAR(p.tanggal_masuk) = ? ";
+            $params[] = $siswaBulan;
+            $params[] = $siswaTahun;
+            $paramTypes .= "ss";
+            $fileName .= "_Bulan_" . $siswaBulan . "_" . $siswaTahun;
+        } elseif ($siswaPeriode == 'tahunan') {
+            $siswaTahun = $_POST['siswa_tahun'] ?? '';
+            if (empty($siswaTahun)) die("Tahun siswa tidak boleh kosong untuk ekspor tahunan siswa.");
             $whereClause .= "AND YEAR(p.tanggal_masuk) = ? ";
-            $params[] = $tahun;
+            $params[] = $siswaTahun;
             $paramTypes .= "s";
-            $fileName .= "Tahunan_" . $tahun;
-        } else {
-            die("Tahun tidak boleh kosong untuk ekspor tahunan.");
+            $fileName .= "_Tahun_" . $siswaTahun;
+        } elseif ($siswaPeriode == 'mingguan') {
+             $siswaTanggalMinggu = $_POST['siswa_tanggal_minggu'] ?? '';
+             if (empty($siswaTanggalMinggu)) die("Tanggal minggu siswa tidak boleh kosong untuk ekspor mingguan siswa.");
+             $whereClause .= "AND YEARWEEK(p.tanggal_masuk, 1) = YEARWEEK(STR_TO_DATE(?, '%Y-%m-%d'), 1) ";
+             $params[] = $siswaTanggalMinggu;
+             $paramTypes .= "s";
+             $fileName .= "_Minggu_" . $siswaTanggalMinggu;
         }
         break;
+
     case 'semua':
         $fileName .= "Semua_Data";
         break;
+
     default:
         die("Tipe ekspor tidak valid.");
 }
 
-// Add Class Filter if not 'all' and not 'per_siswa' (per_siswa handles student ID directly)
-if ($kelasFilter != 'all' && $exportType !== 'per_siswa') {
-    $whereClause .= "AND s.kelas = ? ";
-    $params[] = $kelasFilter;
-    $paramTypes .= "s";
-    $fileName .= "_Kelas_" . $kelasFilter;
+// Add Multi-select Class Filter
+$selectedClasses = $_POST['kelas_filter'] ?? [];
+if (!empty($selectedClasses) && $exportType !== 'per_siswa') {
+    $placeholders = implode(',', array_fill(0, count($selectedClasses), '?'));
+    $whereClause .= "AND s.kelas IN ($placeholders) ";
+    $params = array_merge($params, $selectedClasses);
+    $paramTypes .= str_repeat("s", count($selectedClasses)); // 's' for each class
+
+    $fileName .= "_Kelas_" . implode('-', $selectedClasses);
 }
 
 
@@ -121,6 +152,7 @@ if ($stmt === false) {
 }
 
 if (!empty($params)) {
+    // Dynamically bind parameters
     mysqli_stmt_bind_param($stmt, $paramTypes, ...$params);
 }
 
@@ -211,4 +243,3 @@ $writer->save('php://output');
 mysqli_stmt_close($stmt);
 mysqli_close($conection);
 exit;
-?>
