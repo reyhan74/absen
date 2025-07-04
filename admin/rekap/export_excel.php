@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+// --- IMPORTANT: Disable all error reporting to prevent HTML output in CSV ---
+error_reporting(0);
+ini_set('display_errors', 0);
+
 // Basic authentication check, similar to rekap.php
 if (!isset($_SESSION['login']) || $_SESSION["role"] != 'admin') {
     header("location: ../../auth/login.php?pesan=tolak_akses");
@@ -74,18 +79,26 @@ $query = "
 
 $result = mysqli_query($conection, $query);
 if (!$result) {
-    die("Query Error: " . mysqli_error($conection));
+    // Log the error instead of dying, as error_reporting(0) will hide it.
+    // For debugging, you might temporarily enable error_reporting here.
+    error_log("Database Query Error in export_excel.php: " . mysqli_error($conection));
+    die("Error generating report. Please check server logs.");
 }
 
 // --- Excel Export Headers ---
-header('Content-Type: text/csv');
+header('Content-Type: text/csv; charset=utf-8'); // Added charset for better compatibility
 header('Content-Disposition: attachment; filename="rekap_presensi_siswa_' . date('Ymd_His') . '.csv"');
 header('Pragma: no-cache');
 header('Expires: 0');
 
 $output = fopen('php://output', 'w');
 
-// Write the column headers
+// Write the Byte Order Mark (BOM) for UTF-8 compatibility in Excel
+// This helps Excel correctly interpret UTF-8 characters.
+fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+
+// Write the column headers (ensure proper parameters for fputcsv)
 fputcsv($output, [
     'No',
     'NIS',
@@ -97,12 +110,20 @@ fputcsv($output, [
     'Foto Masuk',
     'Jam Keluar',
     'Foto Keluar'
-]);
+], ',', '"', '\\'); // Explicitly define delimiter, enclosure, and escape character
 
 // Write the data rows
 $no = 1;
 if (mysqli_num_rows($result) > 0) {
     while ($row = mysqli_fetch_assoc($result)) {
+        // Build the full URL for the photo if needed, otherwise just indicate presence
+        $foto_masuk_text = !empty($row['foto_masuk']) ?
+                           'http://' . $_SERVER['HTTP_HOST'] . '/aplikasi_presensi_siswa/siswa/presensi/foto/' . $row['foto_masuk'] :
+                           'Tidak Ada Foto';
+        $foto_keluar_text = !empty($row['foto_keluar']) ?
+                            'http://' . $_SERVER['HTTP_HOST'] . '/aplikasi_presensi_siswa/siswa/presensi/foto/' . $row['foto_keluar'] :
+                            'Tidak Ada Foto';
+
         fputcsv($output, [
             $no++,
             $row['nis'],
@@ -111,13 +132,13 @@ if (mysqli_num_rows($result) > 0) {
             $row['tanggal_masuk'],
             $row['jam_masuk'],
             $row['nama_lokasi'] ?? '-',
-            !empty($row['foto_masuk']) ? 'Link Foto Masuk' : 'Tidak Ada Foto', // Indicate presence, not actual image in CSV
+            $foto_masuk_text,
             $row['jam_keluar'] ?? '-',
-            !empty($row['foto_keluar']) ? 'Link Foto Keluar' : 'Tidak Ada Foto' // Indicate presence
-        ]);
+            $foto_keluar_text
+        ], ',', '"', '\\'); // Explicitly define delimiter, enclosure, and escape character
     }
 } else {
-    fputcsv($output, ['Tidak ada data presensi ditemukan.']);
+    fputcsv($output, ['Tidak ada data presensi ditemukan.'], ',', '"', '\\');
 }
 
 fclose($output);
