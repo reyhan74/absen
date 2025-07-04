@@ -60,7 +60,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
               <select name="lokasi" id="lokasiSelect" class="form-control w-50 mx-auto" required>
                 <option value="">-- Pilih Lokasi --</option>
                 <?php foreach ($lokasi_presensi as $lokasi): ?>
-                  <option value="<?= htmlspecialchars($lokasi['nama_lokasi']) ?>">
+                  <option value='<?= json_encode($lokasi) ?>'>
                     <?= htmlspecialchars($lokasi['nama_lokasi']) ?>
                   </option>
                 <?php endforeach; ?>
@@ -90,6 +90,7 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
                     <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
                     <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
+                    <input type="hidden" name="status_masuk" id="status_masuk" value="">
                     <button type="submit" name="tombol_masuk" class="btn btn-primary" disabled>Masuk</button>
                   </form>
                 </div>
@@ -136,40 +137,53 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
   const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
     "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
+  let jamMasukDB = null;
+  let jamPulangDB = null;
+
   function updateTime() {
     const waktu = new Date();
-    const jam = waktu.getHours();
+    const jam = waktu.getHours().toString().padStart(2, '0');
+    const menit = waktu.getMinutes().toString().padStart(2, '0');
+    const jamMenit = `${jam}:${menit}`;
 
     const tanggal = waktu.getDate();
     const bulan = namaBulan[waktu.getMonth()];
     const tahun = waktu.getFullYear();
-    const jamStr = jam.toString().padStart(2, '0');
-    const menit = waktu.getMinutes().toString().padStart(2, '0');
     const detik = waktu.getSeconds().toString().padStart(2, '0');
 
     ["masuk", "keluar"].forEach(prefix => {
       document.getElementById(`tanggal_${prefix}`).innerHTML = tanggal;
       document.getElementById(`bulan_${prefix}`).innerHTML = bulan;
       document.getElementById(`tahun_${prefix}`).innerHTML = tahun;
-      document.getElementById(`jam_${prefix}`).innerHTML = jamStr;
+      document.getElementById(`jam_${prefix}`).innerHTML = jam;
       document.getElementById(`menit_${prefix}`).innerHTML = menit;
       document.getElementById(`detik_${prefix}`).innerHTML = detik;
     });
 
-    // tampilkan tombol sesuai waktu
-    if (jam >= 6 && jam < 12) {
-      document.getElementById("masukSection").style.display = "block";
-      document.getElementById("keluarSection").style.display = "none";
-    } else if (jam >= 12 && jam < 18) {
-      document.getElementById("masukSection").style.display = "none";
-      document.getElementById("keluarSection").style.display = "block";
-    } else {
-      document.getElementById("masukSection").style.display = "none";
-      document.getElementById("keluarSection").style.display = "none";
+    if (jamMasukDB && jamPulangDB) {
+      if (jamMenit >= jamMasukDB && jamMenit < jamPulangDB) {
+        document.getElementById("masukSection").style.display = "block";
+        document.getElementById("keluarSection").style.display = "none";
+        document.getElementById("status_masuk").value = (jamMenit > jamMasukDB) ? "Terlambat" : "Tepat Waktu";
+      } else if (jamMenit >= jamPulangDB) {
+        document.getElementById("masukSection").style.display = "none";
+        document.getElementById("keluarSection").style.display = "block";
+      } else {
+        document.getElementById("masukSection").style.display = "none";
+        document.getElementById("keluarSection").style.display = "none";
+      }
     }
   }
+
   setInterval(updateTime, 1000);
   updateTime();
+
+  document.getElementById("lokasiSelect").addEventListener("change", function () {
+    const selected = JSON.parse(this.value);
+    jamMasukDB = selected.jam_masuk?.substring(0,5);
+    jamPulangDB = selected.jam_pulang?.substring(0,5);
+    updateTime();
+  });
 </script>
 
 <?php include('../layout/foother.php'); ?>
