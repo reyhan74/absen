@@ -11,8 +11,8 @@ $foto = $_SESSION['foto'] ?? '';
 // Fungsi untuk ambil path foto
 function getProfilePhoto($foto)
 {
-    if (!empty($foto) && file_exists(__DIR__ . "/../home/profile/profile_guru" . $foto)) {
-        return '../../assets/img/profile_guru' . htmlspecialchars($foto);
+    if (!empty($foto) && file_exists(__DIR__ . "/" . $foto)) {
+        return '/' . htmlspecialchars($foto);
     } else {
         return '../../assets/img/download.jpg';
     }
