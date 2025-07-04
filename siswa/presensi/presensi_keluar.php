@@ -55,14 +55,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
 include('../layout/header.php');
 
 if (isset($_POST['tombol_keluar'])) {
-    $latitude_pegawai = $_POST['latitude_pegawai'];
-    $longitude_pegawai = $_POST['longitude_pegawai'];
-    $latitude_kantor = $_POST['latitude_kantor'];
-    $longitude_kantor = $_POST['longitude_kantor'];
-    $radius = $_POST['radius'];
+   $latitude_pegawai = floatval($_POST['latitude_pegawai']);
+$longitude_pegawai = floatval($_POST['longitude_pegawai']);
+$latitude_kantor = floatval($_POST['latitude_kantor']);
+$longitude_kantor = floatval($_POST['longitude_kantor']);
+$radius = floatval($_POST['radius']);
 
     // Hitung jarak antara lokasi pengguna dan kantor
-    $theta = $longitude_pegawai - $longitude_kantor;
+    $theta = floatval($longitude_pegawai) - floatval($longitude_kantor);
     $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
              cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($theta));
     $jarak = acos($jarak);
