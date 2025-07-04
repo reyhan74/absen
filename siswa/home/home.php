@@ -228,7 +228,7 @@ if (isset($_GET['pesan'])) {
     Swal.fire({ icon: "error", title: "Lokasi Error", text: message });
   }
 
-  // Event saat lokasi dipilih
+  // Saat lokasi dipilih
   document.getElementById("lokasiSelect").addEventListener("change", function () {
     const lokasi = this.value;
     if (!lokasi) return;
@@ -249,7 +249,15 @@ if (isset($_GET['pesan'])) {
         document.querySelectorAll("input[name='radius']").forEach(el => el.value = data.radius);
         document.querySelectorAll("input[name='zona_waktu']").forEach(el => el.value = data.zona_waktu);
 
-        getLocation(data.latitut, data.longitude, data.radius);
+        // Konversi dan validasi sebelum dipakai
+        const lat = parseFloat(data.latitut);
+        const lon = parseFloat(data.longitude);
+        const rad = parseFloat(data.radius);
+        if (!isNaN(lat) && !isNaN(lon) && !isNaN(rad)) {
+          getLocation(lat, lon, rad);
+        } else {
+          Swal.fire("Data Tidak Valid", "Koordinat atau radius bermasalah.", "error");
+        }
       } else {
         Swal.fire({
           icon: "error",
