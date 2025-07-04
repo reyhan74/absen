@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Session variables
 $page_title = $page_title ?? 'Dashboard';
-$nama = $_SESSION['nama'] ?? 'User';
+$nama = $_SESSION['nama'] ?? 'User ';
 $foto = $_SESSION['foto'] ?? '';
 
 // Fungsi untuk ambil path foto
