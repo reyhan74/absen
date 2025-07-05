@@ -7,6 +7,13 @@ if (!isset($_SESSION['login'])) {
     exit;
 }
 
+$latitude_pegawai = 0;
+$longitude_pegawai = 0;
+$latitude_kantor = 0;
+$longitude_kantor = 0;
+$radius = 0;
+$nama_lokasi = '';
+
 // Proses upload foto via form tersembunyi
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $file_foto = $_POST['photo'];
@@ -26,7 +33,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $id_siswa = $_SESSION['id'] ?? null;
 
     // Ambil kembali data lokasi dari form
-   $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
+    $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
+    $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
+    $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
+    $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
+    $radius = floatval($_POST['radius'] ?? 0);
+    $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
+
+    // Cek Jarak
+    $theta = $longitude_pegawai - $longitude_kantor;
+    $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
+             cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($theta));
+    $jarak = acos($jarak);
+    $jarak = rad2deg($jarak);
+    $mil = $jarak * 60 * 1.1515;
+    $jarak_km = $mil * 1.609344;
+    $jarak_meter = $jarak_km * 1000;
+
+    if ($jarak_meter > $radius) {
+        $_SESSION['gagal'] = "Anda berada di luar radius sekolah.";
+        header("Refresh: 3; URL= ../home/home.php");
+        exit;
+    }
+
     if ($id_siswa) {
         $cekQuery = "SELECT * FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_masuk'";
         $cekResult = mysqli_query($conection, $cekQuery);
@@ -53,37 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     }
 }
 
-// Tampilkan halaman kamera jika tombol masuk ditekan dan jarak valid
 include('../layout/header.php');
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
-    // Ambil kembali semua data lokasi dari form hidden
-    $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
-    $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
-    $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
-    $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0);
-    $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
-
-    // Cek Jarak
-    $theta = $longitude_pegawai - $longitude_kantor;
-    $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
-             cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($theta));
-    $jarak = acos($jarak);
-    $jarak = rad2deg($jarak);
-    $mil = $jarak * 60 * 1.1515;
-    $jarak_km = $mil * 1.609344;
-    $jarak_meter = $jarak_km * 1000;
-
-    if ($jarak_meter > $radius) {
-        $_SESSION['gagal'] = "Anda berada di luar radius sekolah.";
-        header("Refresh: 3; URL= ../home/home.php");
-        exit;
-    }
-
-
-
-}
 ?>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
@@ -94,7 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
+                        <?php if ($latitude_pegawai != 0 && $longitude_pegawai != 0): ?>
                         <iframe src="https://www.google.com/maps?q=<?= $latitude_pegawai ?>,<?= $longitude_pegawai ?>&hl=es;z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>
+                        <?php else: ?>
+                        <p class="text-danger">Koordinat tidak tersedia.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -149,6 +152,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         });
     });
 </script>
-
 
 <?php include('../layout/foother.php'); ?>
