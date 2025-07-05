@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0); // Use ?? 0 for safety
+    $radius = floatval($_POST['radius']); // Use ?? 0 for safety
 
     // Calculate distance
     $jarak_meter = getDistanceHaversine($latitude_pegawai, $longitude_pegawai, $latitude_kantor, $longitude_kantor);
@@ -96,9 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         file_put_contents($nama_file, $data); // Save the photo to the server
 
         // Insert attendance record into the 'presensi_out' table (for clock-out)
-        $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar, latitude_keluar, longitude_keluar, nama_lokasi_presensi)
-                  VALUES ('$id_siswa', '$tanggal_keluar', '$jam_keluar', '$file_path_for_db', '$latitude_pegawai', '$longitude_pegawai', '$nama_lokasi')";
-        $result = mysqli_query($conection, $query);
+        $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar)
+                      VALUES ('$id_pegawai', '$tanggal_keluar', '$jam_keluar', '$file')";
+            $result = mysqli_query($conection, $query);
 
         if ($result) {
             $_SESSION['berhasil'] = "Presensi keluar berhasil.";
