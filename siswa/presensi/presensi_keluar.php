@@ -190,7 +190,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
 
     function updateMap(lat, long) {
         // Updated the map URL to use the correct user coordinates for display
-        document.getElementById('map-container').innerHTML = `<iframe src="http://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>`;
+        // Ensure this URL works for you. You might need to adjust the "2" or "3"
+        // after "google.com/" depending on the Google Maps embed standard you're using.
+        // Also consider using the newer embed API if this proves problematic.
+        document.getElementById('map-container').innerHTML = `
+            <iframe
+                src="https://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed"
+                width="100%"
+                height="400"
+                style="border:0;"
+                allowfullscreen>
+            </iframe>
+        `;
     }
 
     if (navigator.geolocation) {
@@ -200,6 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
             document.getElementById('latitude_pegawai_input').value = userLat;
             document.getElementById('longitude_pegawai_input').value = userLong;
             updateMap(userLat, userLong);
+            console.log("Geolocation Success! Latitude:", userLat, "Longitude:", userLong); // Debugging log
         }, (error) => {
             let errorMessage = 'Gagal mendapatkan lokasi Anda. Pastikan akses lokasi diizinkan.';
             if (error.code === error.PERMISSION_DENIED) {
@@ -212,11 +224,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
             document.getElementById('map-container').innerHTML = `<p class="text-center text-danger">${errorMessage}</p>`;
             Swal.fire('Gagal Mengakses Lokasi', errorMessage, 'error');
             document.getElementById('ambil-foto').disabled = true; // Disable button if location not available
+            console.error("Geolocation Error:", error.code, error.message); // Debugging error log
+            // Specific check for secure context error (common in local dev)
+            if (error.code === 0 && error.message.includes("Only secure origins are allowed")) {
+                console.error("Hint: This might be due to running on HTTP. Try enabling HTTPS or Chrome's insecure origins flag.");
+            }
+        }, {
+            enableHighAccuracy: true, // Request high accuracy
+            timeout: 10000,           // Set a timeout of 10 seconds
+            maximumAge: 0             // Don't use a cached position, get a fresh one
         });
     } else {
         document.getElementById('map-container').innerHTML = '<p class="text-center text-danger">Browser Anda tidak mendukung geolokasi.</p>';
         Swal.fire('Browser tidak mendukung', 'Perangkat tidak mendukung geolokasi', 'error');
         document.getElementById('ambil-foto').disabled = true; // Disable button if geolocation not supported
+        console.error("Browser does not support Geolocation."); // Debugging log
     }
 
     document.getElementById('ambil-foto').addEventListener('click', function () {
