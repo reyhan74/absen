@@ -202,8 +202,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
             exit; // Important to exit after header redirect
         } else {
             file_put_contents($nama_file, $data);
-            $query = "INSERT INTO presensi (id_siswa, nama_lokasi, tanggal_masuk, jam_masuk, foto_masuk, latitude_pegawai, longitude_pegawai, status_masuk)
-                      VALUES ('$id_siswa', '$nama_lokasi', '$tanggal_masuk', '$jam_masuk', '$file', '$latitude_pegawai', '$longitude_pegawai', '$status_masuk')";
+            $query = "INSERT INTO presensi (id_siswa, nama_lokasi, tanggal_masuk, jam_masuk, foto_masuk)
+                      VALUES ('$id_siswa', '$nama_lokasi', '$tanggal_masuk', '$jam_masuk', '$file')";
             $result = mysqli_query($conection, $query);
 
             if ($result) {
