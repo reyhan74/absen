@@ -1,25 +1,37 @@
 <?php
 session_start();
-include_once('../../config.php'); // Make sure this path is correct
+include_once('../../config.php');
 
-// Set default timezone once at the top for consistency
 date_default_timezone_set("Asia/Jakarta");
 
-// Ensure consistent login redirection path
 if (!isset($_SESSION['login'])) {
-    header("location: ../../auth/siswa/login.php?pesan=belum_login"); // Consistent path
+    header("location: ../../auth/siswa/login.php?pesan=belum_login");
     exit;
 }
 
-// Initialize variables to prevent undefined index errors
+// Initialize variables for displaying the form
 $nama_lokasi = '';
 $latitude_kantor = 0;
 $longitude_kantor = 0;
 $radius = 0;
-$latitude_pegawai = 0;
-$longitude_pegawai = 0;
 $tanggal_keluar_form = date('Y-m-d');
-$jam_keluar_form = date('H:i:s');
+$jam_keluar_form = date('H:i:s'); // Not directly used in processing, but good for display
+
+// Haversine formula for distance calculation (PHP version)
+function getDistanceHaversine($lat1, $lon1, $lat2, $lon2) {
+    $R = 6371e3; // metres
+    $phi1 = deg2rad($lat1);
+    $phi2 = deg2rad($lat2);
+    $deltaPhi = deg2rad($lat2 - $lat1);
+    $deltaLambda = deg2rad($lon2 - $lon1);
+
+    $a = sin($deltaPhi / 2) * sin($deltaPhi / 2) +
+         cos($phi1) * cos($phi2) *
+         sin($deltaLambda / 2) * sin($deltaLambda / 2);
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    return $R * $c; // in metres
+}
 
 // --- Main Logic for Processing Attendance Submission (after photo is taken) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
@@ -28,7 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $foto = str_replace(' ', '+', $foto);
     $data = base64_decode($foto);
 
-    // Ensure 'foto' directory exists
     if (!is_dir('foto')) {
         mkdir('foto', 0777, true);
     }
@@ -38,32 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $nama_file = 'foto/keluar_' . date('Y-m-d_H-i-s') . '.png';
     $file_path_for_db = basename($nama_file); // Just the filename for database
 
-    $id_siswa = $_SESSION['id'] ?? null; // Using id_siswa for consistency with presensi_masuk
+    $id_siswa = $_SESSION['id'] ?? null; // Get student ID from session
 
-    // Retrieve ALL necessary data from the POST request
+    // Retrieve ALL necessary data from the POST request (these came from home.php)
     $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
     $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius']);
+    $radius = floatval($_POST['radius'] ?? 0);
+    $jam_pulang_kantor_config = $_POST['jam_pulang_kantor'] ?? '00:00:00'; // Get configured jam_pulang
 
-    // Haversine formula for distance calculation (PHP version)
-    function getDistanceHaversine($lat1, $lon1, $lat2, $lon2) {
-        $R = 6371e3; // metres
-        $phi1 = deg2rad($lat1);
-        $phi2 = deg2rad($lat2);
-        $deltaPhi = deg2rad($lat2 - $lat1);
-        $deltaLambda = deg2rad($lon2 - $lon1);
-
-        $a = sin($deltaPhi / 2) * sin($deltaPhi / 2) +
-             cos($phi1) * cos($phi2) *
-             sin($deltaLambda / 2) * sin($deltaLambda / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $R * $c; // in metres
-    }
-
+    // Calculate distance
     $jarak_meter = getDistanceHaversine($latitude_pegawai, $longitude_pegawai, $latitude_kantor, $longitude_kantor);
 
     if ($jarak_meter > $radius) {
@@ -73,8 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     }
 
     if ($id_siswa) {
-        // Check if an 'in' record exists for today for this student
-        // Assuming presensi_masuk updates the 'presensi' table, not 'presensi_out'
+        // Check if an 'in' record exists for today for this student in the 'presensi' table
         $cek_masuk_query = "SELECT id FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar'";
         $cek_masuk_result = mysqli_query($conection, $cek_masuk_query);
 
@@ -84,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
             exit;
         }
 
-        // Check if presensi keluar has already been done for today in the 'presensi' table
+        // Check if presensi keluar has already been done for today (jam_pulang is not NULL)
         $cek_keluar_query = "SELECT id FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar' AND jam_pulang IS NOT NULL";
         $cek_keluar_result = mysqli_query($conection, $cek_keluar_query);
 
@@ -98,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         // Store the photo first
         file_put_contents($nama_file, $data);
 
-        // Update the existing 'presensi' record, not insert into a new 'presensi_out' table
+        // Update the existing 'presensi' record (not insert into a new 'presensi_out')
         $query = "UPDATE presensi SET jam_pulang = '$jam_keluar', foto_pulang = '$file_path_for_db', latitude_pulang = '$latitude_pegawai', longitude_pulang = '$longitude_pegawai'
                   WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar'";
         $result = mysqli_query($conection, $query);
@@ -119,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
 }
 
 // --- Display Form for Capturing Photo (initial GET request or POST without photo) ---
-include('../layout/header.php'); // Include header for the display part
+include('../layout/header.php');
 
 // If the page is loaded via GET or a POST without photo (i.e., initial load from home.php)
 if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['photo']))) {
@@ -128,9 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
     $radius = floatval($_POST['radius'] ?? 0);
-    // These will be captured by JavaScript dynamically
-    $latitude_pegawai = 0;
-    $longitude_pegawai = 0;
+    $jam_pulang_kantor_config = $_POST['jam_pulang_kantor'] ?? ''; // Pass the configured jam_pulang
 ?>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
@@ -158,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
                             <input type="hidden" name="latitude_kantor" value="<?= $latitude_kantor ?>">
                             <input type="hidden" name="longitude_kantor" value="<?= $longitude_kantor ?>">
                             <input type="hidden" name="radius" value="<?= $radius ?>">
+                            <input type="hidden" name="jam_pulang_kantor" value="<?= htmlspecialchars($jam_pulang_kantor_config) ?>">
                             <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_input">
                             <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_input">
                             <input type="hidden" name="tanggal_keluar_form" value="<?= $tanggal_keluar_form ?>">
@@ -190,12 +185,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     });
     Webcam.attach('#my_camera');
 
-    // Function to update the map with user's current location
     function updateMap(lat, long) {
-        document.getElementById('map-container').innerHTML = `<iframe src="https://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>`;
+        document.getElementById('map-container').innerHTML = `<iframe src="http://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>`;
     }
 
-    // Get user's location and update map/hidden inputs
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(pos => {
             const userLat = pos.coords.latitude;
@@ -223,7 +216,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     }
 
     document.getElementById('ambil-foto').addEventListener('click', function () {
-        // Ensure user coordinates are available before snapping
         if (!document.getElementById('latitude_pegawai_input').value || !document.getElementById('longitude_pegawai_input').value) {
             Swal.fire('Lokasi Belum Tersedia', 'Mohon tunggu atau pastikan akses lokasi diizinkan.', 'warning');
             return;
@@ -243,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
 
 <?php if (isset($_SESSION['gagal'])): ?>
 <script>
-    document.addEventListener("DOMContentLoaded", function () { // Ensure DOM is loaded for Swal
+    document.addEventListener("DOMContentLoaded", function () {
         Swal.fire({
             icon: "error",
             title: "Oops...",
