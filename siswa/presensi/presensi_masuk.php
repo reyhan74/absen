@@ -93,11 +93,7 @@ include('../layout/header.php');
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <?php if ($latitude_pegawai != 0 && $longitude_pegawai != 0): ?>
                         <iframe src="https://www.google.com/maps?q=<?= $latitude_pegawai ?>,<?= $longitude_pegawai ?>&hl=es;z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>
-                        <?php else: ?>
-                        <p class="text-danger">Koordinat tidak tersedia.</p>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
