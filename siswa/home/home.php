@@ -83,16 +83,15 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
                     <div id="jam_masuk"></div>:<div id="menit_masuk"></div>:<div id="detik_masuk"></div>
                   </div>
                   <form id="formMasuk" action="../presensi/presensi_masuk.php" method="POST">
-                    <input type="hidden" name="nama_lokasi">
-                    <input type="hidden" name="latitude_kantor">
-                    <input type="hidden" name="longitude_kantor">
-                    <input type="hidden" name="radius">
-                    <input type="hidden" name="zona_waktu">
-                    <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
-                    <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
-                    <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
-                    <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
-                    <input type="hidden" name="status_masuk" id="status_masuk" value="">
+                    <input type="hidden" name="nama_lokasi" value="<?= htmlspecialchars($nama_lokasi) ?>">
+              <input type="hidden" name="latitude_kantor" value="<?= htmlspecialchars($latitude_kantor) ?>">
+              <input type="hidden" name="longitude_kantor" value="<?= htmlspecialchars($longitude_kantor) ?>">
+              <input type="hidden" name="radius" value="<?= htmlspecialchars($radius) ?>">
+              <input type="hidden" name="zona_waktu" value="<?= htmlspecialchars($zona_waktu) ?>">
+              <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_masuk">
+              <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_masuk">
+              <input type="hidden" name="tanggal_masuk" value="<?= date('Y-m-d') ?>">
+              <input type="hidden" name="jam_masuk" value="<?= date('H:i:s') ?>">
                     <button type="submit" name="tombol_masuk" id="btnMasuk" class="btn btn-primary">Masuk</button>
                   </form>
                 </div>
