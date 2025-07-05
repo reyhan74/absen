@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0);
+    $radius = floatval($_POST['radius']);
     $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
     $status_masuk = mysqli_real_escape_string($conection, $_POST['status_masuk'] ?? '');
     $tanggal_masuk = mysqli_real_escape_string($conection, $_POST['tanggal_masuk_form'] ?? date('Y-m-d'));
