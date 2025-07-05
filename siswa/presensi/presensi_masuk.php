@@ -56,18 +56,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
 // Tampilkan halaman kamera jika tombol masuk ditekan dan jarak valid
 include('../layout/header.php');
 
-if (isset($_POST['tombol_masuk'])) {
-    $latitude_pegawai = floatval($latitude_pegawai);
-    $longitude_pegawai = floatval($longitude_pegawai);
-    $latitude_kantor = floatval($latitude_kantor);
-    $longitude_kantor = floatval($longitude_kantor);
-    $radius = floatval($radius);
-    $perbedaan_koordinat = $longitude_pegawai - $longitude_kantor;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
+    // Ambil kembali semua data lokasi dari form hidden
+    $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
+    $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
+    $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
+    $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
+    $radius = floatval($_POST['radius'] ?? 0);
+    $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
 
-    // Hitung jarak
-    $perbedaan_koordinat = $longitude_pegawai - $longitude_kantor;
+    // Cek Jarak
+    $theta = $longitude_pegawai - $longitude_kantor;
     $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
-             cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($perbedaan_koordinat));
+             cos(deg2rad($latitude_pegawai)) * cos(deg2rad($latitude_kantor)) * cos(deg2rad($theta));
     $jarak = acos($jarak);
     $jarak = rad2deg($jarak);
     $mil = $jarak * 60 * 1.1515;
@@ -75,10 +76,13 @@ if (isset($_POST['tombol_masuk'])) {
     $jarak_meter = $jarak_km * 1000;
 
     if ($jarak_meter > $radius) {
-        $_SESSION['gagal'] = "Anda berada di luar sekolah.";
+        $_SESSION['gagal'] = "Anda berada di luar radius sekolah.";
         header("Refresh: 3; URL= ../home/home.php");
         exit;
     }
+
+
+
 }
 ?>
 
