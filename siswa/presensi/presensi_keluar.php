@@ -57,8 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0);
-    $jam_pulang_kantor_config = $_POST['jam_pulang_kantor'] ?? '00:00:00'; // Get configured jam_pulang
+    $radius = floatval($_POST['radius'] ?? 0); // Use ?? 0 for safety
 
     // Calculate distance
     $jarak_meter = getDistanceHaversine($latitude_pegawai, $longitude_pegawai, $latitude_kantor, $longitude_kantor);
@@ -70,7 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     }
 
     if ($id_siswa) {
-        // Check if an 'in' record exists for today for this student in the 'presensi' table
+        // --- START: Checks for Separate Tables ---
+
+        // 1. Check if the student has done presensi masuk today in the 'presensi' table
         $cek_masuk_query = "SELECT id FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar'";
         $cek_masuk_result = mysqli_query($conection, $cek_masuk_query);
 
@@ -80,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
             exit;
         }
 
-        // Check if presensi keluar has already been done for today (jam_pulang is not NULL)
-        $cek_keluar_query = "SELECT id FROM presensi WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar' AND jam_pulang IS NOT NULL";
+        // 2. Check if the student has already done presensi keluar today in the 'presensi_out' table
+        $cek_keluar_query = "SELECT id FROM presensi_out WHERE id_siswa = '$id_siswa' AND tanggal_keluar = '$tanggal_keluar'";
         $cek_keluar_result = mysqli_query($conection, $cek_keluar_query);
 
         if (mysqli_num_rows($cek_keluar_result) > 0) {
@@ -89,14 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
             header("Refresh: 3; URL=../home/home.php");
             exit;
         }
+        // --- END: Checks for Separate Tables ---
 
-        // If 'masuk' exists and 'pulang' doesn't, proceed to update
-        // Store the photo first
-        file_put_contents($nama_file, $data);
+        // If checks pass, proceed to insert into presensi_out
+        file_put_contents($nama_file, $data); // Save the photo to the server
 
-        // Update the existing 'presensi' record (not insert into a new 'presensi_out')
-        $query = "UPDATE presensi SET jam_pulang = '$jam_keluar', foto_pulang = '$file_path_for_db', latitude_pulang = '$latitude_pegawai', longitude_pulang = '$longitude_pegawai'
-                  WHERE id_siswa = '$id_siswa' AND tanggal_masuk = '$tanggal_keluar'";
+        // Insert attendance record into the 'presensi_out' table (for clock-out)
+        $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar, latitude_keluar, longitude_keluar, nama_lokasi_presensi)
+                  VALUES ('$id_siswa', '$tanggal_keluar', '$jam_keluar', '$file_path_for_db', '$latitude_pegawai', '$longitude_pegawai', '$nama_lokasi')";
         $result = mysqli_query($conection, $query);
 
         if ($result) {
