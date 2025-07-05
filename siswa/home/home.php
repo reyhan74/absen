@@ -191,39 +191,61 @@ while ($row = mysqli_fetch_assoc($lokasi_result)) {
     }
   }
 
-  function updateTime() {
-    const waktu = new Date();
-    const jam = waktu.getHours().toString().padStart(2, '0');
-    const menit = waktu.getMinutes().toString().padStart(2, '0');
-    const jamMenit = `${jam}:${menit}`;
-    const tanggal = waktu.getDate();
-    const bulan = namaBulan[waktu.getMonth()];
-    const tahun = waktu.getFullYear();
-    const detik = waktu.getSeconds().toString().padStart(2, '0');
+ function updateTime() {
+  const waktu = new Date();
+  const jam = waktu.getHours().toString().padStart(2, '0');
+  const menit = waktu.getMinutes().toString().padStart(2, '0');
+  const jamMenit = `${jam}:${menit}`;
+  const tanggal = waktu.getDate();
+  const bulan = namaBulan[waktu.getMonth()];
+  const tahun = waktu.getFullYear();
+  const detik = waktu.getSeconds().toString().padStart(2, '0');
 
-    ["masuk", "keluar"].forEach(prefix => {
-      document.getElementById(`tanggal_${prefix}`).innerHTML = tanggal;
-      document.getElementById(`bulan_${prefix}`).innerHTML = bulan;
-      document.getElementById(`tahun_${prefix}`).innerHTML = tahun;
-      document.getElementById(`jam_${prefix}`).innerHTML = jam;
-      document.getElementById(`menit_${prefix}`).innerHTML = menit;
-      document.getElementById(`detik_${prefix}`).innerHTML = detik;
-    });
-
-    if (jamMasukDB && jamPulangDB && lokasiValid) {
-      if (jamMenit >= jamMasukDB && jamMenit < jamPulangDB) {
-        document.getElementById("masukSection").style.display = "block";
-        document.getElementById("keluarSection").style.display = "none";
-        document.getElementById("status_masuk").value = (jamMenit > jamMasukDB) ? "Terlambat" : "Tepat Waktu";
-      } else if (jamMenit >= jamPulangDB) {
-        document.getElementById("masukSection").style.display = "none";
-        document.getElementById("keluarSection").style.display = "block";
-      } else {
-        document.getElementById("masukSection").style.display = "none";
-        document.getElementById("keluarSection").style.display = "none";
-      }
+  ["masuk", "keluar"].forEach(prefix => {
+    document.getElementById(`tanggal_${prefix}`).innerHTML = tanggal;
+    document.getElementById(`bulan_${prefix}`).innerHTML = bulan;
+    document.getElementById(`tahun_${prefix}`).innerHTML = tahun;
+    document.getElementById(`jam_${prefix}`).innerHTML = jam;
+    document.getElementById(`menit_${prefix}`).innerHTML = menit;
+    document.getElementById(`detik_${prefix}`).innerHTML = detik;
+  });
+  if (jamMasukDB && jamPulangDB && lokasiValid) {
+    if (jamMenit >= "05:00" && jamMenit <= "07:00") {
+      document.getElementById("masukSection").style.display = "block";
+      document.getElementById("keluarSection").style.display = "none";
+      document.getElementById("status_masuk").value = (jamMenit > "07:00") ? "Terlambat" : "Tepat Waktu";
+    } else if (jamMenit > "07:00") {
+      document.getElementById("masukSection").style.display = "none";
+      document.getElementById("keluarSection").style.display = "block";
+    } else {
+      document.getElementById("masukSection").style.display = "none";
+      document.getElementById("keluarSection").style.display = "none";
     }
   }
+  if (lokasiValid) {
+    // -- Tampilkan Presensi Masuk Mulai Jam 06:00 --
+    if (jamMenit >= "06:00" && jamMenit <= "12:00") {
+      document.getElementById("masukSection").style.display = "block";
+      document.getElementById("keluarSection").style.display = "none";
+
+      if (jamMenit > "07:00") {
+        document.getElementById("status_masuk").value = "Terlambat";
+      } else {
+        document.getElementById("status_masuk").value = "Tepat Waktu";
+      }
+
+    } else if (jamMenit >= jamPulangDB) {
+      // -- Tampilkan Presensi Keluar setelah jam pulang --
+      document.getElementById("masukSection").style.display = "none";
+      document.getElementById("keluarSection").style.display = "block";
+
+    } else {
+      // -- Diluar waktu masuk dan belum masuk jam pulang --
+      document.getElementById("masukSection").style.display = "none";
+      document.getElementById("keluarSection").style.display = "none";
+    }
+  }
+}
 
   setInterval(updateTime, 1000);
 
