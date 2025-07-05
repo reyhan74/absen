@@ -49,19 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $nama_file = 'foto/keluar_' . date('Y-m-d_H-i-s') . '.png';
     $file_path_for_db = basename($nama_file); // Just the filename for database
 
-    $id_siswa = $_SESSION['id'] ?? null; // Get student ID from session
+    $id_siswa = $_SESSION['id'] ?? null; // Get student ID from session (assuming 'id' is for siswa)
 
     // Retrieve ALL necessary data from the POST request (these came from home.php)
+    // These variables are still needed for the radius check, even if not inserted into presensi_out
     $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
     $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius']); // Use ?? 0 for safety
+    $radius = floatval($_POST['radius'] ?? 0);
 
     // Calculate distance
     $jarak_meter = getDistanceHaversine($latitude_pegawai, $longitude_pegawai, $latitude_kantor, $longitude_kantor);
 
+    // --- Radius check for presensi keluar (STILL PERFORMED) ---
     if ($jarak_meter > $radius) {
         $_SESSION['gagal'] = "Anda berada di luar radius lokasi yang ditentukan untuk presensi keluar. Jarak Anda: " . round($jarak_meter) . "m, Radius: " . round($radius) . "m.";
         header("Refresh: 3; URL= ../home/home.php");
@@ -95,10 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         // If checks pass, proceed to insert into presensi_out
         file_put_contents($nama_file, $data); // Save the photo to the server
 
-        // Insert attendance record into the 'presensi_out' table (for clock-out)
+        // --- MODIFIED INSERT QUERY (EXCLUDING LAT/LONG/NAMA_LOKASI) ---
         $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar)
-                      VALUES ('$id_pegawai', '$tanggal_keluar', '$jam_keluar', '$file')";
-            $result = mysqli_query($conection, $query);
+                  VALUES ('$id_siswa', '$tanggal_keluar', '$jam_keluar', '$file_path_for_db')";
+        $result = mysqli_query($conection, $query);
 
         if ($result) {
             $_SESSION['berhasil'] = "Presensi keluar berhasil.";
@@ -187,6 +189,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     Webcam.attach('#my_camera');
 
     function updateMap(lat, long) {
+        // Updated the map URL to use the correct user coordinates for display
         document.getElementById('map-container').innerHTML = `<iframe src="http://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed" width="100%" height="400" style="border:0;" allowfullscreen></iframe>`;
     }
 
