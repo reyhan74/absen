@@ -33,13 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $id_siswa = $_SESSION['id'] ?? null;
 
     // Ambil kembali data lokasi dari form
-    $latitude_pegawai = floatval($_POST['latitude_pegawai'] ?? 0);
-    $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
-    $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
-    $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0);
-    $nama_lokasi = mysqli_real_escape_string($conection, $_POST['nama_lokasi'] ?? 'Tidak diketahui');
-
+    $nama_lokasi = $_POST['nama_lokasi'];
+    $latitude_pegawai = $_POST['latitude_pegawai'];
+    $longitude_pegawai = $_POST['longitude_pegawai'];
+    $latitude_kantor = $_POST['latitude_kantor'];
+    $longitude_kantor = $_POST['longitude_kantor'];
+    $radius = $_POST['radius'];
+    
     // Cek Jarak
     $theta = $longitude_pegawai - $longitude_kantor;
     $jarak = sin(deg2rad($latitude_pegawai)) * sin(deg2rad($latitude_kantor)) +
