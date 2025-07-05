@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $longitude_pegawai = floatval($_POST['longitude_pegawai'] ?? 0);
     $latitude_kantor = floatval($_POST['latitude_kantor'] ?? 0);
     $longitude_kantor = floatval($_POST['longitude_kantor'] ?? 0);
-    $radius = floatval($_POST['radius'] ?? 0);
+    $radius = floatval($_POST['radius']);
 
     // Haversine formula for distance calculation (PHP version)
     function getDistanceHaversine($lat1, $lon1, $lat2, $lon2) {
