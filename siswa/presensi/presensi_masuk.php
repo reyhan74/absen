@@ -24,10 +24,6 @@ $query_lokasi = "SELECT latitut, longitude, radius, nama_lokasi FROM lokasi_pres
 $result_lokasi = mysqli_query($conection, $query_lokasi);
 $data_lokasi = mysqli_fetch_assoc($result_lokasi);
 
-$latitude_kantor = $data_lokasi['latitude'] ?? -6.2088; // Default to Jakarta if not found
-$longitude_kantor = $data_lokasi['longitude'] ?? 106.8456; // Default to Jakarta if not found
-$radius = $data_lokasi['radius'] ?? 50; // Default radius in meters
-$nama_lokasi = mysqli_real_escape_string($conection, $data_lokasi['nama_lokasi'] ?? 'Lokasi Default');
 
 $tanggal_masuk = date('Y-m-d');
 $jam_masuk = date('H:i:s');
