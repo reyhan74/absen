@@ -33,6 +33,29 @@ $status_masuk = mysqli_real_escape_string($conection, $_POST['status_masuk'] ?? 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['photo']))) {
     include('../layout/header.php'); // Include the common header for the page display
 ?>
+<head>
+    <title>Presensi Siswa</title>
+    <style>
+        #my_result {
+            margin-top: 10px;
+            /* Added margin for spacing below webcam feed */
+        }
+
+        #my_result img {
+            max-width: 100%; /* Ensure image doesn't overflow its container */
+            height: auto;    /* Maintain aspect ratio */
+            display: block;  /* Remove extra space below the image */
+            border: 1px solid #ddd; /* Subtle border for the image */
+            border-radius: 4px; /* Slightly rounded corners for aesthetics */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow */
+        }
+
+        /* Optional: Add some spacing below the camera feed */
+        #my_camera {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -90,8 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
 
     // Configure Webcam.js settings
     Webcam.set({
-        width: 354,            // Display width
-        height: 472,           // Display height
+        width: 354,            // Display width for the webcam feed
+        height: 472,           // Display height for the webcam feed
         image_format: 'jpeg',  // Image format for capture (JPEG for efficiency)
         jpeg_quality: 90       // JPEG quality (0-100, 90 is good balance)
     });
@@ -150,11 +173,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
 
         // Take a snapshot using Webcam.js
         Webcam.snap(function (data_uri) {
-            // Display the captured image preview
-            document.getElementById('my_result').innerHTML = '<img src="' + data_uri + '"/>';
-            // Set the captured photo data (base64) to the hidden input field
+            // Display the captured image preview with specific styling for better display
+            const resultDiv = document.getElementById('my_result');
+            resultDiv.innerHTML = `
+                <img src="${data_uri}"
+                     alt="Foto Presensi"
+                     style="width: 100%; height: auto; display: block; border: 1px solid #ccc; border-radius: 5px; margin-top: 10px;"/>
+            `;
             document.getElementById('photo-input').value = data_uri;
-            // Submit the form to the server
             document.getElementById('form-presensi').submit();
         });
     });
