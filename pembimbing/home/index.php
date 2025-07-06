@@ -5,7 +5,7 @@ session_start();
 if (!isset($_SESSION['login'])) {
     header("location: ../../auth/login.php?pesan=belum_login");
     exit;
-} elseif ($_SESSION["role"] != 'wali_murid') { // Pastikan hanya wali yang bisa akses
+} elseif ($_SESSION["role"] != 'pembimbing') { // Pastikan hanya wali yang bisa akses
     header("location:../../auth/login.php?pesan=tolak_akses");
     exit;
 }
