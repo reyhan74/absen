@@ -114,9 +114,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit'])) {
 
             // Prepare the INSERT query with new username and password columns
             // You MUST add 'username' and 'password' columns to your 'siswa' table in the database
-            $stmt = $conection->prepare("INSERT INTO siswa (nis, username, password, nama, no_absen, kelas, jenis_kelamin, alamat, no_handphone, foto, status)
+            $stmt = $conection->prepare("INSERT INTO siswa (username, password, nis, nama, no_absen, kelas, jenis_kelamin, alamat, no_handphone, foto, status)
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssissssss", $nis, $username, $hashedPassword, $nama, $no_absen, $kelas, $jenis_kelamin, $alamat, $no_handphone, $foto_path, $status);
+            $stmt->bind_param("ssssissssss", $nis, $username, $hashedPassword, $nis, $nama, $no_absen, $kelas, $jenis_kelamin, $alamat, $no_handphone, $foto_path, $status);
 
             if ($stmt->execute()) {
                 $_SESSION['berhasil'] = "Data Siswa Berhasil Ditambahkan";
