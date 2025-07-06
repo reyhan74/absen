@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once('../config.php');  // Ensure this file contains the correct database connection
+require_once('../config.php'); // Ensure this file contains the correct database connection
 
 // Check database connection
 if (!$conection) {
@@ -11,53 +11,88 @@ if (isset($_POST["login"])) {
     $username = $_POST["username"];
     $password = $_POST["password"];
 
-    // Prepared statement to prevent SQL injection
-    $stmt = mysqli_prepare($conection, 'SELECT * FROM guru WHERE username = ?');
-    
-    // Check if the statement was prepared successfully
-    if (!$stmt) {
-        die("SQL prepare failed: " . mysqli_error($conection));
+    // Try to find the user in the 'guru' table
+    $stmt_guru = mysqli_prepare($conection, 'SELECT * FROM guru WHERE username = ?');
+
+    if (!$stmt_guru) {
+        die("SQL prepare (guru) failed: " . mysqli_error($conection));
     }
 
-    // Bind parameters
-    mysqli_stmt_bind_param($stmt, 's', $username);
-    
-    // Execute the query
-    mysqli_stmt_execute($stmt);
-    
-    // Get the result
-    $result = mysqli_stmt_get_result($stmt);
+    mysqli_stmt_bind_param($stmt_guru, 's', $username);
+    mysqli_stmt_execute($stmt_guru);
+    $result_guru = mysqli_stmt_get_result($stmt_guru);
 
-    if (mysqli_num_rows($result) === 1) {
-        $user = mysqli_fetch_assoc($result);
+    if (mysqli_num_rows($result_guru) === 1) {
+        $user = mysqli_fetch_assoc($result_guru);
 
-        // Check the password with password_verify
+        // Check the password with password_verify for guru
         if (password_verify($password, $user['password'])) {
             if ($user['status'] === 'aktif') {
                 $_SESSION["login"] = true;
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['nama'] = $user['nama'];
-                $_SESSION['lokasi_presensi'] = $user['lokasi_presensi'];
+                $_SESSION['lokasi_presensi'] = $user['lokasi_presensi']; // Assuming guru has this field
+
                 if ($user['role'] === 'admin') {
                     header("location: ../admin/home/home.php");
                     exit();
-                }
-                if ($user['role'] === 'pembimbing') {
+                } elseif ($user['role'] === 'pembimbing') {
                     header("location: ../pembimbing/home/");
                     exit();
                 } else {
+                    // Default for other guru roles
                     header("location: ../pegawai/home/home.php");
                     exit();
                 }
             } else {
-                $_SESSION["gagal"] = "Akun anda belum aktif";
+                $_SESSION["gagal"] = "Akun Anda belum aktif. Silakan hubungi administrator.";
             }
         } else {
-            $_SESSION["gagal"] = "Password Salah Silahkan Coba Lagi";
+            $_SESSION["gagal"] = "Kata sandi salah. Silakan coba lagi.";
         }
     } else {
-        $_SESSION["gagal"] = "Username Salah Silahkan Coba Lagi";
+        // If not found in 'guru' table, try to find the user in the 'siswa' table
+        $stmt_siswa = mysqli_prepare($conection, 'SELECT * FROM siswa WHERE username = ?');
+
+        if (!$stmt_siswa) {
+            die("SQL prepare (siswa) failed: " . mysqli_error($conection));
+        }
+
+        mysqli_stmt_bind_param($stmt_siswa, 's', $username);
+        mysqli_stmt_execute($stmt_siswa);
+        $result_siswa = mysqli_stmt_get_result($stmt_siswa);
+
+        if (mysqli_num_rows($result_siswa) === 1) {
+            $user = mysqli_fetch_assoc($result_siswa);
+
+            // Check the password with password_verify for siswa
+            if (password_verify($password, $user['password'])) {
+                if ($user['status'] === 'aktif') {
+                    $_SESSION["login"] = true;
+                    $_SESSION['id'] = $user['id'];
+                    $_SESSION['role'] = 'siswa'; // Explicitly set role for students
+                    $_SESSION['nama'] = $user['nama'];
+                    $_SESSION['kelas'] = $user['kelas']; // Add student-specific session data
+
+                    header("location: ../siswa/home/home.php"); // Redirect student to their home page
+                    exit();
+                } else {
+                    $_SESSION["gagal"] = "Akun Anda belum aktif. Silakan hubungi administrator.";
+                }
+            } else {
+                $_SESSION["gagal"] = "Kata sandi salah. Silakan coba lagi.";
+            }
+        } else {
+            $_SESSION["gagal"] = "Nama pengguna tidak ditemukan. Silakan coba lagi.";
+        }
+    }
+    // Close statements
+    if (isset($stmt_guru)) {
+        mysqli_stmt_close($stmt_guru);
+    }
+    if (isset($stmt_siswa)) {
+        mysqli_stmt_close($stmt_siswa);
     }
 }
 ?>
@@ -67,9 +102,8 @@ if (isset($_POST["login"])) {
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>Sigin by rhn.id</title>
+    <title>Login - rhn.id</title>
     <link rel="icon" type="png" href="../assets/img/logo_cb.png">
-    <!-- CSS files -->
     <link href="../assets/css/tabler.min.css?1692870487" rel="stylesheet"/>
     <link href="../assets/css/tabler-flags.min.css?1692870487" rel="stylesheet"/>
     <link href="../assets/css/tabler-payments.min.css?1692870487" rel="stylesheet"/>
@@ -92,72 +126,68 @@ if (isset($_POST["login"])) {
         <div class="row align-items-center g-4">
           <div class="col-lg">
             <div class="container-tight">
-              
-
             <?php
             if(isset($_GET['pesan'])){
               if($_GET['pesan']== "belum_login"){
-                $_SESSION['gagal'] = 'anda belum login';
+                $_SESSION['gagal'] = 'Anda belum login. Silakan masuk terlebih dahulu.';
               } else if ($_GET['pesan'] == "tolak_akses") {
-                $_SESSION['gagal'] = 'akses kehalaman ini ditolak';
+                $_SESSION['gagal'] = 'Akses ke halaman ini ditolak.';
               }
             }
             ?>
-        
-                <div class="card card-md">
+              <div class="card card-md">
                 <div class="card-body">
-                    <div class="text-center mb-4">
-                <a href="." class="navbar-brand navbar-brand-autodark"><img src="../assets/img/images-removebg-preview.png" height="100" alt=""></a>
-              </div>
-                    <h2 class="h2 text-center mb-4">Login Your Account</h2>
-
-                <form action="" method="post" autocomplete="off" novalidate>
+                  <div class="text-center mb-4">
+                    <a href="." class="navbar-brand navbar-brand-autodark"><img src="../assets/img/images-removebg-preview.png" height="100" alt=""></a>
+                  </div>
+                  <h2 class="h2 text-center mb-4">Masuk ke Akun Anda</h2>
+                  <form action="" method="post" autocomplete="off" novalidate>
                     <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <input type="text" class="form-control" name="username" placeholder="Username" autocomplete="off" required>
+                        <label class="form-label">Nama Pengguna</label>
+                        <input type="text" class="form-control" name="username" placeholder="Masukkan nama pengguna" autocomplete="off" required>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Password</label>
+                        <label class="form-label">Kata Sandi</label>
                         <div class="input-group input-group-flat">
-                        <input type="password" id="password" class="form-control" name="password" placeholder="Password" autocomplete="off" required>
-                        <span class="input-group-text">
-                            <a href="#" id="togglePassword" class="link-secondary" title="Show password">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                                <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-                            </svg>
-                            </a>
-                        </span>
+                            <input type="password" id="password" class="form-control" name="password" placeholder="Masukkan kata sandi" autocomplete="off" required>
+                            <span class="input-group-text">
+                                <a href="#" id="togglePassword" class="link-secondary" title="Tampilkan kata sandi">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                    <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
+                                </svg>
+                                </a>
+                            </span>
                         </div>
                     </div>
                     <div class="form-footer">
-                        <button type="submit" name="login" class="btn btn-outline-primary w-100">Sign in</button>
+                        <button type="submit" name="login" class="btn btn-outline-primary w-100">Masuk</button>
                     </div>
-                </form>
+                  </form>
                 </div>
-                <div class="hr-text">or</div>
+                <div class="hr-text">atau</div>
+              </div>
+              <div class="text-center text-secondary mt-3">
+                Belum punya akun? <a href="./sign-up.html" tabindex="-1">Daftar</a>
+              </div>
             </div>
-            <div class="text-center text-secondary mt-3">
-                Don't have an account yet? <a href="./sign-up.html" tabindex="-1">Sign up</a>
-            </div>
-            </div>
-            </div>
-            <div class="col-lg d-none d-lg-block">
+          </div>
+          <div class="col-lg d-none d-lg-block">
             <img src="../assets/img/undraw_secure_login_pdn4.svg" height="300" class="d-block mx-auto" alt="">
-            </div>
+          </div>
         </div>
-    </div>
+      </div>
     </div>
 
     <script>
     document.getElementById("togglePassword").addEventListener("click", function (e) {
-        e.preventDefault(); // cegah link reload halaman
+        e.preventDefault(); // Prevent link from reloading the page
         const passwordInput = document.getElementById("password");
         const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
         passwordInput.setAttribute("type", type);
 
-        // Opsional: Ganti ikon mata (eye/eye-off)
+        // Optional: Toggle eye icon
         this.innerHTML = type === "password"
         ? `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -175,22 +205,19 @@ if (isset($_POST["login"])) {
     </script>
 
 
-    <!-- Libs JS -->
     <script src="../assets/libs/apexcharts/dist/apexcharts.min.js?1692870487" defer></script>
     <script src="../assets/libs/jsvectormap/dist/js/jsvectormap.min.js?1692870487" defer></script>
     <script src="../assets/libs/jsvectormap/dist/maps/world.js?1692870487" defer></script>
     <script src="../assets/libs/jsvectormap/dist/maps/world-merc.js?1692870487" defer></script>
-    <!-- Tabler Core -->
     <script src="../assets/js/tabler.min.js?1692870487" defer></script>
     <script src="../assets/js/demo.min.js?1692870487" defer></script>
-    <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <?php if (isset($_SESSION['gagal'])) { ?>
     <script>
     Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: "<?= htmlspecialchars($_SESSION['gagal']); ?>",  // Proper escaping to avoid XSS
+        text: "<?= htmlspecialchars($_SESSION['gagal']); ?>", // Proper escaping to avoid XSS
     });
     </script>
     <?php unset($_SESSION['gagal']); ?>
