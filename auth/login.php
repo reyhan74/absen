@@ -40,11 +40,10 @@ if (isset($_POST["login"])) {
                 } elseif ($user['role'] === 'pembimbing') {
                     header("location: ../pembimbing/home/");
                     exit();
-                } else {
-                    // Default for other guru roles
+                }elseif ($user['guru'] === 'pembimbing') {
                     header("location: ../pegawai/home/home.php");
                     exit();
-                }
+                }  
             } else {
                 $_SESSION["gagal"] = "Akun Anda belum aktif. Silakan hubungi administrator.";
             }
