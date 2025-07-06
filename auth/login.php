@@ -32,7 +32,6 @@ if (isset($_POST["login"])) {
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['nama'] = $user['nama'];
-                $_SESSION['lokasi_presensi'] = $user['lokasi_presensi']; // Assuming guru has this field
 
                 if ($user['role'] === 'admin') {
                     header("location: ../admin/home/home.php");
