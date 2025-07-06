@@ -39,7 +39,7 @@ if (isset($_POST["login"])) {
                 } elseif ($user['role'] === 'pembimbing') {
                     header("location: ../pembimbing/home/");
                     exit();
-                }elseif ($user['guru'] === 'pembimbing') {
+                }elseif ($user['guru'] === 'guru') {
                     header("location: ../pegawai/home/home.php");
                     exit();
                 }  
