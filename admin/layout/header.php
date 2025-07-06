@@ -190,7 +190,7 @@
                   <div class="dropdown-menu">
                     <div class="dropdown-menu-columns">
                       <div class="dropdown-menu-column">
-                        <a class="dropdown-item" href="../data_users/users.php">
+                        <a class="dropdown-item" href="../data_siswa/users.php">
                           siswa
                         </a>
                         <a class="dropdown-item" href="../data_guru/users.php">
