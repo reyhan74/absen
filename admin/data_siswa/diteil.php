@@ -56,6 +56,10 @@ include('../layout/header.php');
                         <td><?= htmlspecialchars($student['nis']); ?></td>
                     </tr>
                     <tr>
+                        <th>Username</th>
+                        <td><?= htmlspecialchars($student['username']); ?></td>
+                    </tr>
+                    <tr>
                         <th>Nomor absen</th>
                         <td><?= htmlspecialchars($student['no_absen']); ?></td>
                     </tr>
@@ -74,10 +78,6 @@ include('../layout/header.php');
                     <tr>
                         <th>No Handphone</th>
                         <td><?= htmlspecialchars($student['no_handphone']); ?></td>
-                    </tr>
-                    <tr>
-                        <th>Lokasi Presensi</th>
-                        <td><?= htmlspecialchars($student['lokasi_presensi']); ?></td>
                     </tr>
                     <tr>
                         <th>Status</th>
