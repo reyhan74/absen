@@ -20,7 +20,7 @@ $longitude_pegawai = $_POST['longitude_pegawai'] ?? 0;
 // Assuming 'lokasi_presensi' is a table or a setting in 'config.php'
 // For this example, I'll hardcode some values as you haven't provided the fetching logic for them.
 // You should replace these with actual values from your database.
-$query_lokasi = "SELECT latitude, longitude, radius, nama_lokasi FROM lokasi_presensi WHERE id = 1 LIMIT 1"; // Adjust ID as needed
+$query_lokasi = "SELECT latitut, longitude, radius, nama_lokasi FROM lokasi_presensi WHERE id = 1 LIMIT 1"; // Adjust ID as needed
 $result_lokasi = mysqli_query($conection, $query_lokasi);
 $data_lokasi = mysqli_fetch_assoc($result_lokasi);
 
