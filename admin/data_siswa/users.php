@@ -46,8 +46,8 @@ $result = mysqli_query($conection, "SELECT * FROM siswa");
               <tr>
                 <th>NIS</th>
                 <th>Absen</th>
-                <th>Nama</th>
                 <th>Username</th>
+                <th>Nama</th>
                 <th>Kelas</th>
                 <th>Status</th>
                 <th>Aksi</th>
@@ -58,8 +58,8 @@ $result = mysqli_query($conection, "SELECT * FROM siswa");
               <tr>
                 <td><?= $siswa['nis'] ?></td>
                 <td><?= $siswa['no_absen'] ?></td>
-                <td><?= $siswa['nama'] ?></td>
                 <td><?= $siswa['username'] ?></td>
+                <td><?= $siswa['nama'] ?></td>
                 <td><?= $siswa['kelas'] ?></td>
                 <td><?= $siswa['status'] ?></td>
                 <td>
