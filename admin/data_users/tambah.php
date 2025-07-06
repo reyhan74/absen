@@ -25,7 +25,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit'])) {
     $alamat = htmlspecialchars($_POST['alamat']);
     $kelas = htmlspecialchars($_POST['kelas']);
     $no_handphone = htmlspecialchars($_POST['no_handphone']);
-    $lokasi_presensi = htmlspecialchars($_POST['lokasi_presensi']);
     $status = htmlspecialchars($_POST['status']);
     $foto = $_FILES['foto']['name'];
     $foto_tmp = $_FILES['foto']['tmp_name'];
@@ -37,7 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit'])) {
     if (empty($jenis_kelamin)) $errors[] = "Jenis Kelamin wajib diisi";
     if (empty($alamat)) $errors[] = "Alamat wajib diisi";
     if (empty($no_handphone)) $errors[] = "No Handphone wajib diisi";
-    if (empty($lokasi_presensi)) $errors[] = "Lokasi Presensi wajib diisi";
     if (empty($status)) $errors[] = "Status wajib diisi";
     if (empty($foto)) $errors[] = "Foto wajib diisi";
 
@@ -57,9 +55,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['submit'])) {
         }
 
         // Siapkan query INSERT
-        $stmt = $conection->prepare("INSERT INTO siswa (nis, nama, no_absen, kelas, jenis_kelamin, alamat, no_handphone, lokasi_presensi, foto, status) 
+        $stmt = $conection->prepare("INSERT INTO siswa (nis, nama, no_absen, kelas, jenis_kelamin, alamat, no_handphone, foto, status) 
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssssssss", $nis, $nama, $no_absen, $kelas, $jenis_kelamin, $alamat, $no_handphone, $lokasi_presensi, $foto_path, $status);
+        $stmt->bind_param("sssssssss", $nis, $nama, $no_absen, $kelas, $jenis_kelamin, $alamat, $no_handphone, $foto_path, $status);
 
         // Eksekusi
         if ($stmt->execute()) {
@@ -237,17 +235,6 @@ include('../layout/header.php');
                         <div class="col-md-6 mb-3">
                             <label for="">No Handphone</label>
                             <input type="text" class="form-control" name="no_handphone" value="<?= $_POST['no_handphone'] ?? '' ?>">
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label for="">Lokasi Presensi</label>
-                            <select name="lokasi_presensi" class="form-control">
-                                <option value="">--Pilih Lokasi Presensi--</option>
-                                <option value="Kampus 1" <?= (isset($_POST['lokasi_presensi']) && $_POST['lokasi_presensi'] === 'Kampus 1') ? 'selected' : '' ?>>Kampus 1</option>
-                                <option value="Kampus 2" <?= (isset($_POST['lokasi_presensi']) && $_POST['lokasi_presensi'] === 'Kampus 2') ? 'selected' : '' ?>>Kampus 2</option>
-                                <option value="Kampus 3" <?= (isset($_POST['lokasi_presensi']) && $_POST['lokasi_presensi'] === 'Kampus 3') ? 'selected' : '' ?>>Kampus 3</option>
-                                <option value="Kampus 4" <?= (isset($_POST['lokasi_presensi']) && $_POST['lokasi_presensi'] === 'Kampus 4') ? 'selected' : '' ?>>Kampus 4</option>
-                            </select>
                         </div>
 
                         <div class="col-md-6 mb-3">
