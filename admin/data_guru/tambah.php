@@ -109,8 +109,8 @@ if (isset($_POST['submit'])) {
 
         if ($role == 'guru') {
             $upload_dir_role = 'profile_guru/'; 
-        } elseif ($role == 'wali_murid') {
-            $upload_dir_role = 'profile_wali/'; 
+        } elseif ($role == 'pembimbing') {
+            $upload_dir_role = 'profile_pembimbing/'; 
         } else {
             // Default directory if role is not guru or wali_murid (e.g., for 'admin' if you add that option)
             $upload_dir_role = 'profiles/'; 

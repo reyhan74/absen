@@ -43,8 +43,8 @@ if (isset($_POST["login"])) {
                     header("location: ../admin/home/home.php");
                     exit();
                 }
-                if ($user['role'] === 'wali_murid') {
-                    header("location: ../wali_murid/home/");
+                if ($user['role'] === 'pembimbing') {
+                    header("location: ../pembimbing/home/");
                     exit();
                 } else {
                     header("location: ../pegawai/home/home.php");
