@@ -137,11 +137,7 @@ if (isset($_POST['submit'])) {
                 $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); 
-            } elseif ($role == 'wali_murid') {
-                // Based on previous suggestion for wali_murid table:
-                // email, password, nama_wali, jenis_kelamin, alamat, telepon, status, foto
-                // Please ensure your 'wali_murid' table has 'jenis_kelamin' and 'status' columns if you use them.
-                // 'username' from form is mapped to 'email' in wali_murid, 'no_handphone' to 'telepon'.
+            } elseif ($role == 'pembimbing') {
                 $stmt = $conection->prepare("INSERT INTO guru (username, password, nama, jenis_kelamin, alamat, no_handphone, status, role, foto) 
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->bind_param("sssssssss", $username, $hashedPassword, $nama, $jenis_kelamin, $alamat, $no_handphone, $status, $role, $foto_target_path); 
