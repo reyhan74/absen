@@ -26,8 +26,8 @@ function getDistanceHaversine($lat1, $lon1, $lat2, $lon2) {
     $deltaLambda = deg2rad($lon2 - $lon1);
 
     $a = sin($deltaPhi / 2) * sin($deltaPhi / 2) +
-         cos($phi1) * cos($phi2) *
-         sin($deltaLambda / 2) * sin($deltaLambda / 2);
+             cos($phi1) * cos($phi2) *
+             sin($deltaLambda / 2) * sin($deltaLambda / 2);
     $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
     return $R * $c; // in metres
@@ -36,17 +36,21 @@ function getDistanceHaversine($lat1, $lon1, $lat2, $lon2) {
 // --- Main Logic for Processing Attendance Submission (after photo is taken) ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
     $file_foto = $_POST['photo'];
+    // Remove the data URI prefix and replace spaces with plus signs for base64 decoding
     $foto = str_replace('data:image/jpeg;base64,', '', $file_foto);
     $foto = str_replace(' ', '+', $foto);
-    $data = base64_decode($foto);
+    $data = base64_decode($foto); // Decode the base64 image data
 
+    // Create 'foto' directory if it doesn't exist.
+    // Permissions '0777' are very permissive; consider '0755' or '0775' for production.
     if (!is_dir('foto')) {
         mkdir('foto', 0777, true);
     }
 
     $tanggal_keluar = date('Y-m-d'); // Current server date
     $jam_keluar = date('H:i:s'); // Current server time
-    $nama_file = 'foto/keluar_' . date('Y-m-d_H-i-s') . '.png';
+    // Ensure the filename always has a .jpeg extension
+    $nama_file = 'foto/keluar_' . date('Y-m-d_H-i-s') . '.jpeg';
     $file_path_for_db = basename($nama_file); // Just the filename for database
 
     $id_siswa = $_SESSION['id'] ?? null; // Get student ID from session (assuming 'id' is for siswa)
@@ -94,20 +98,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
         }
         // --- END: Checks for Separate Tables ---
 
-        // If checks pass, proceed to insert into presensi_out
-        file_put_contents($nama_file, $data); // Save the photo to the server
+        // If checks pass, proceed to save the photo and insert into presensi_out
+        // Save the raw decoded image data first
+        if (file_put_contents($nama_file, $data)) {
+            // Optional: Re-process the image using GD for compression if needed
+            // This ensures a specific quality regardless of client-side setting, or can reduce file size further.
+            if (function_exists('imagecreatefromjpeg') && function_exists('imagejpeg')) {
+                $source_image = @imagecreatefromjpeg($nama_file); // Use @ to suppress warnings if file is corrupted
+                if ($source_image) {
+                    $compression_quality = 80; // Adjust this value (0-100) for more/less compression
+                    imagejpeg($source_image, $nama_file, $compression_quality);
+                    imagedestroy($source_image); // Free up memory
+                    // echo "Image re-compressed to quality: " . $compression_quality . ".\n"; // Debugging
+                } else {
+                    error_log("Failed to create JPEG image from " . $nama_file . " for re-compression.");
+                    // Optionally, delete the file if it couldn't be processed
+                    // unlink($nama_file);
+                }
+            } else {
+                error_log("GD library functions for JPEG not available for re-compression.");
+            }
 
-        // --- MODIFIED INSERT QUERY (EXCLUDING LAT/LONG/NAMA_LOKASI) ---
-        $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar)
-                  VALUES ('$id_siswa', '$tanggal_keluar', '$jam_keluar', '$file_path_for_db')";
-        $result = mysqli_query($conection, $query);
+            // --- MODIFIED INSERT QUERY (EXCLUDING LAT/LONG/NAMA_LOKASI) ---
+            $query = "INSERT INTO presensi_out (id_siswa, tanggal_keluar, jam_keluar, foto_keluar)
+                      VALUES ('$id_siswa', '$tanggal_keluar', '$jam_keluar', '$file_path_for_db')";
+            $result = mysqli_query($conection, $query);
 
-        if ($result) {
-            $_SESSION['berhasil'] = "Presensi keluar berhasil.";
-            header("Location: terimakasih_keluar.php"); // Assuming this page exists
-            exit;
+            if ($result) {
+                $_SESSION['berhasil'] = "Presensi keluar berhasil.";
+                header("Location: terimakasih_keluar.php"); // Assuming this page exists
+                exit;
+            } else {
+                $_SESSION['gagal'] = "Presensi keluar gagal: " . mysqli_error($conection);
+            }
         } else {
-            $_SESSION['gagal'] = "Presensi keluar gagal: " . mysqli_error($conection);
+             $_SESSION['gagal'] = "Gagal menyimpan foto ke server.";
         }
     } else {
         $_SESSION['gagal'] = "ID pengguna tidak ditemukan.";
@@ -119,6 +144,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['photo'])) {
 
 // --- Display Form for Capturing Photo (initial GET request or POST without photo) ---
 include('../layout/header.php');
+// Include SweetAlert2 library for better user notifications
+echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
 // If the page is loaded via GET or a POST without photo (i.e., initial load from home.php)
 if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['photo']))) {
@@ -129,8 +156,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     $radius = floatval($_POST['radius'] ?? 0);
     $jam_pulang_kantor_config = $_POST['jam_pulang_kantor'] ?? ''; // Pass the configured jam_pulang
 ?>
+<head>
+    <title>Presensi Keluar</title>
+    <style>
+        #my_result {
+            margin-top: 10px; /* Added margin for spacing below webcam feed */
+        }
 
+        #my_result img {
+            max-width: 100%; /* Ensure image doesn't overflow its container */
+            height: auto;    /* Maintain aspect ratio */
+            display: block;  /* Remove extra space below the image */
+            border: 1px solid #ddd; /* Subtle border for the image */
+            border-radius: 4px; /* Slightly rounded corners for aesthetics */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow */
+        }
+
+        /* Optional: Add some spacing below the camera feed */
+        #my_camera {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js"></script>
+
 
 <div class="page-body">
     <div class="container-xl">
@@ -152,14 +201,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
                         <form method="POST" id="form-presensi">
                             <input type="hidden" name="photo" id="photo-input">
                             <input type="hidden" name="nama_lokasi" value="<?= htmlspecialchars($nama_lokasi) ?>">
-                            <input type="hidden" name="latitude_kantor" value="<?= $latitude_kantor ?>">
-                            <input type="hidden" name="longitude_kantor" value="<?= $longitude_kantor ?>">
-                            <input type="hidden" name="radius" value="<?= $radius ?>">
+                            <input type="hidden" name="latitude_kantor" value="<?= htmlspecialchars($latitude_kantor) ?>">
+                            <input type="hidden" name="longitude_kantor" value="<?= htmlspecialchars($longitude_kantor) ?>">
+                            <input type="hidden" name="radius" value="<?= htmlspecialchars($radius) ?>">
                             <input type="hidden" name="jam_pulang_kantor" value="<?= htmlspecialchars($jam_pulang_kantor_config) ?>">
                             <input type="hidden" name="latitude_pegawai" id="latitude_pegawai_input">
                             <input type="hidden" name="longitude_pegawai" id="longitude_pegawai_input">
-                            <input type="hidden" name="tanggal_keluar_form" value="<?= $tanggal_keluar_form ?>">
-                            <input type="hidden" name="jam_keluar_form" value="<?= $jam_keluar_form ?>">
+                            <input type="hidden" name="tanggal_keluar_form" value="<?= htmlspecialchars($tanggal_keluar_form) ?>">
+                            <input type="hidden" name="jam_keluar_form" value="<?= htmlspecialchars($jam_keluar_form) ?>">
 
                             <button class="btn btn-primary mt-2" type="button" id="ambil-foto">Ambil Foto & Presensi Keluar</button>
                         </form>
@@ -183,16 +232,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
     Webcam.set({
         width: 354,
         height: 472,
-        image_format: 'jpeg',
-        jpeg_quality: 90
+        image_format: 'jpeg', // Already set to JPEG
+        jpeg_quality: 90 // Already set to 90% quality
     });
     Webcam.attach('#my_camera');
 
     function updateMap(lat, long) {
-        // Updated the map URL to use the correct user coordinates for display
-        // Ensure this URL works for you. You might need to adjust the "2" or "3"
-        // after "google.com/" depending on the Google Maps embed standard you're using.
-        // Also consider using the newer embed API if this proves problematic.
+        // The Google Maps embed URL corrected to use the variables directly
         document.getElementById('map-container').innerHTML = `
             <iframe
                 src="https://maps.google.com/maps?q=${lat},${long}&hl=id&z=14&output=embed"
@@ -248,7 +294,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
         }
 
         Webcam.snap(function (data_uri) {
-            document.getElementById('my_result').innerHTML = '<img src="' + data_uri + '"/>';
+            // Display the captured image preview with specific styling for better display
+            const resultDiv = document.getElementById('my_result');
+            resultDiv.innerHTML = `
+                <img src="${data_uri}"
+                     alt="Foto Presensi"
+                     style="width: 100%; height: auto; display: block; border: 1px solid #ccc; border-radius: 5px; margin-top: 10px;"/>
+            `;
             document.getElementById('photo-input').value = data_uri;
             document.getElementById('form-presensi').submit();
         });
@@ -269,7 +321,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || ($_SERVER['REQUEST_METHOD'] === 'POS
         });
     });
 </script>
-<?php unset($_SESSION['gagal']); ?>
+<?php unset($_SESSION['gagal']); // Clear the session variable after displaying ?>
 <?php endif; ?>
 
-<?php include('../layout/foother.php'); ?>
+<?php
+// Include the common footer for the page
+include('../layout/foother.php');
+?>
